@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>About – Rebirth Creative Studio AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+
+    <style>
+      /* ===============================
+         ABOUT – Team / Studio identity
+         =============================== */
+
+      .about {
+        padding: 64px 0 72px;
+        text-align: center;
+      }
+
+      .aboutTitle {
+        font-family: var(--font-serif);
+        font-weight: 500;
+        letter-spacing: -0.4px;
+        margin: 0 0 14px;
+        font-size: clamp(40px, 6vw, 64px);
+      }
+
+      .aboutTitle em {
+        font-style: italic;
+      }
+
+      .aboutText {
+        max-width: 780px;
+        margin: 0 auto 24px;
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      .aboutBtn {
+        margin-bottom: 40px;
+      }
+
+      /* ===== Team layout ===== */
+      .teamGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+        align-items: start;
+        margin-top: 12px;
+      }
+
+      /* collage per person */
+      .teamMember {
+        position: relative;
+        height: 360px;
+      }
+
+      .memberCard {
+        position: absolute;
+        background: rgba(255,255,255,0.55);
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 24px;
+        box-shadow: var(--shadow-md);
+        overflow: hidden;
+        padding: 14px;
+      }
+
+      .memberCard img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 16px;
+        display: block;
+      }
+
+      .memberCard--main {
+        left: 50%;
+        transform: translateX(-50%);
+        width: 360px;
+        height: 320px;
+        padding: 18px;
+        background: rgba(255,255,255,0.45);
+        z-index: 2;
+      }
+
+      .memberCard--left {
+        left: 0;
+        bottom: 22px;
+        width: 120px;
+        height: 120px;
+        transform: rotate(-10deg);
+        z-index: 1;
+      }
+
+      .memberCard--right {
+        right: 0;
+        bottom: 34px;
+        width: 120px;
+        height: 120px;
+        transform: rotate(10deg);
+        z-index: 1;
+      }
+
+      .memberName {
+        margin-top: 16px;
+        font-family: var(--font-serif);
+        font-weight: 500;
+        font-size: 18px;
+      }
+
+      .memberRole {
+        margin: 4px 0 0;
+        font-size: 12px;
+        color: rgba(0,0,0,0.55);
+      }
+
+      /* responsive */
+      @media (max-width: 900px) {
+        .teamGrid {
+          grid-template-columns: 1fr;
+          gap: 54px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- TOP NAV -->
+    <header class="topbar">
+      <div class="wrap topbar__inner">
+        <a class="brand" href="index.html">
+          <span class="brand__name">Rebirth Creative Studio</span>
+          <span class="brand__ai">AI</span>
+        </a>
+
+        <nav class="nav">
+          <a href="about.html" aria-current="page">About us</a>
+          <a href="contact.html">Contact us</a>
+          <a class="launch" href="flow.html">Launch App <span class="launch__icon">↗</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="about">
+      <div class="wrap">
+        <h1 class="aboutTitle">We are <em>Rebirth</em>.</h1>
+
+        <p class="aboutText">
+          Rebirth Creative Studio is a design-led AI project focused on transforming personal
+          clothing, fabrics, and memories into luxury handbag concepts.  
+          We explore how technology and emotion can coexist in the creative process — turning
+          familiar materials into something meaningful you can carry.
+        </p>
+
+        <a href="contact.html" class="btn btn--primary aboutBtn">CONTACT US</a>
+
+        <!-- TEAM -->
+        <section class="teamGrid" aria-label="Rebirth team">
+          <!-- MEMBER 1 -->
+          <div>
+            <div class="teamMember">
+              <div class="memberCard memberCard--left">
+                <img src="assets/team1-left.png" alt="" />
+              </div>
+
+              <div class="memberCard memberCard--main">
+                <img src="assets/team1-main.png" alt="Team member portrait" />
+              </div>
+
+              <div class="memberCard memberCard--right">
+                <img src="assets/team1-right.png" alt="" />
+              </div>
+            </div>
+
+            <h3 class="memberName">Marriane</h3>
+            <p class="memberRole">Creative Direction · Design</p>
+          </div>
+
+          <!-- MEMBER 2 -->
+          <div>
+            <div class="teamMember">
+              <div class="memberCard memberCard--left">
+                <img src="assets/team2-left.png" alt="" />
+              </div>
+
+              <div class="memberCard memberCard--main">
+                <img src="assets/team2-main.png" alt="Team member portrait" />
+              </div>
+
+              <div class="memberCard memberCard--right">
+                <img src="assets/team2-right.png" alt="" />
+              </div>
+            </div>
+
+            <h3 class="memberName">Second Member</h3>
+            <p class="memberRole">AI · Development · Systems</p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer__inner">
+        <div class="footerBrand">
+          <span class="footerBrand__name">Rebirth Creative Studio</span>
+          <span class="footerBrand__ai">AI</span>
+        </div>
+
+        <div class="footerTag">Design luxury from your own clothing</div>
+
+        <nav class="footerLinks">
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+          <a href="flow.html">our App</a>
+        </nav>
+
+        <div class="footerCopy">© 2025 Rebirth Creative Studio AI. All rights reserved.</div>
+      </div>
+    </footer>
+  </body>
+</html>

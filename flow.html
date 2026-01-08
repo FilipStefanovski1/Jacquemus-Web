@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rebirth Creative Studio AI – App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="flow.css" />
+  </head>
+
+  <body>
+    <header class="topbar">
+      <div class="wrap topbar__inner">
+        <a class="brand" href="index.html" aria-label="Rebirth Creative Studio AI Home">
+          <span class="brand__name">Rebirth Creative Studio</span>
+          <span class="brand__ai">AI</span>
+        </a>
+
+        <nav class="nav">
+          <a href="about.html">About us</a>
+          <a href="contact.html">Contact us</a>
+          <a class="launch" href="flow.html" aria-current="page">Launch App <span class="launch__icon">↗</span></a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="app">
+      <div class="wrap">
+        <!-- Header block like the landing -->
+        <section class="appHero">
+          <h1 class="appHero__title">Create <span class="appHero__italic">Your</span> Handbag</h1>
+          <p class="appHero__sub">
+            Pick a base bag, upload your fabric texture, generate the new material, then try it on with a full-body image.
+          </p>
+
+          <div class="progress">
+            <div class="progress__pill">
+              <span class="progress__dot" data-dot="1"></span>
+              <span class="progress__dot" data-dot="2"></span>
+              <span class="progress__dot" data-dot="3"></span>
+              <span class="progress__dot" data-dot="4"></span>
+              <span class="progress__dot" data-dot="5"></span>
+            </div>
+            <div class="progress__label" id="progressLabel">Step 1 of 5</div>
+          </div>
+        </section>
+
+        <!-- hidden file inputs -->
+        <input id="fabricInput" type="file" accept="image/*" hidden />
+        <input id="personInput" type="file" accept="image/*" hidden />
+
+        <!-- STEP 1 -->
+        <section class="step is-active" data-step="1">
+          <div class="cardGrid">
+            <div class="card">
+              <div class="card__kicker">Step 1</div>
+              <h2 class="card__title">Select a bag</h2>
+              <p class="card__text">Pick a Jacquemus bag base. This is the shape we keep consistent.</p>
+
+              <div class="bagGrid" id="formThumbs">
+                <button class="bagTile is-active" type="button" data-bag="assets/bag-red.png">
+                  <img src="assets/bag-red.png" alt="Bag option" />
+                </button>
+                <button class="bagTile" type="button" data-bag="assets/bag-black.png">
+                  <img src="assets/bag-black.png" alt="Bag option" />
+                </button>
+                <button class="bagTile" type="button" data-bag="assets/bag-white.png">
+                  <img src="assets/bag-white.png" alt="Bag option" />
+                </button>
+              </div>
+
+              <div class="monoLine">
+                Selected: <span id="selectedBagName">assets/bag-red.png</span>
+              </div>
+
+              <div class="row">
+                <button class="btn btn--ghost" data-action="back" disabled>Back</button>
+                <button class="btn btn--primary" data-action="next">Continue</button>
+              </div>
+            </div>
+
+            <div class="card card--preview">
+              <div class="previewTop">
+                <div>
+                  <div class="card__kicker">Preview</div>
+                  <div class="previewTop__title">Base bag</div>
+                </div>
+              </div>
+
+              <div class="previewBox">
+                <img id="bagPreview" class="previewImg" src="assets/bag-red.png" alt="Bag preview" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 2 -->
+        <section class="step" data-step="2">
+          <div class="cardGrid">
+            <div class="card">
+              <div class="card__kicker">Step 2</div>
+              <h2 class="card__title">Optional palette</h2>
+              <p class="card__text">This step is optional. The main transformation happens in Step 3 with your fabric.</p>
+
+              <div class="paletteRow" id="swatchesRow" aria-label="Color palette">
+                <button class="swatch s1" type="button" aria-label="swatch"></button>
+                <button class="swatch s2" type="button" aria-label="swatch"></button>
+                <button class="swatch s3" type="button" aria-label="swatch"></button>
+                <button class="swatch s4" type="button" aria-label="swatch"></button>
+                <button class="swatch s5" type="button" aria-label="swatch"></button>
+                <button class="swatch s6" type="button" aria-label="swatch"></button>
+                <button class="swatch s7" type="button" aria-label="swatch"></button>
+                <button class="swatch s8" type="button" aria-label="swatch"></button>
+              </div>
+
+              <div class="row">
+                <button class="btn btn--ghost" data-action="back">Back</button>
+                <button class="btn btn--primary" data-action="next">Continue</button>
+              </div>
+            </div>
+
+            <div class="card card--preview">
+              <div class="previewTop">
+                <div>
+                  <div class="card__kicker">Preview</div>
+                  <div class="previewTop__title">Selected bag</div>
+                </div>
+              </div>
+
+              <div class="previewBox">
+                <img id="bagPreview2" class="previewImg" src="assets/bag-red.png" alt="Bag preview" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 3 -->
+        <section class="step" data-step="3">
+          <div class="cardGrid cardGrid--single">
+            <div class="card">
+              <div class="card__kicker">Step 3</div>
+              <h2 class="card__title">Upload your fabric texture</h2>
+              <p class="card__text">
+                Upload a fabric image. Prompt used: “wrap the bag of image 1 in the texture of image 2”.
+              </p>
+
+              <button class="drop" type="button" id="fabricBtn">
+                <span class="drop__icon">▢</span>
+                <span id="fabricLabel">Upload or drag & drop fabric image...</span>
+              </button>
+
+              <div class="miniRow">
+                <div class="mini">
+                  <div class="mini__label">Bag</div>
+                  <div class="mini__box">
+                    <img id="bagMini" src="assets/bag-red.png" alt="Selected bag" />
+                  </div>
+                </div>
+
+                <div class="mini">
+                  <div class="mini__label">Fabric</div>
+                  <div class="mini__box">
+                    <div class="mini__empty" id="fabricMiniEmpty">No fabric yet</div>
+                    <img id="fabricMini" alt="Fabric preview" style="display:none;" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <button class="btn btn--ghost" data-action="back">Back</button>
+                <button class="btn btn--primary" type="button" id="generateBagBtn">Generate bag with fabric</button>
+              </div>
+
+              <div class="status" id="status3" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 4 -->
+        <section class="step" data-step="4">
+          <div class="cardGrid cardGrid--single">
+            <div class="card">
+              <div class="card__kicker">Step 4</div>
+              <h2 class="card__title">Your generated bag</h2>
+              <p class="card__text">Download it, or move forward to try-on.</p>
+
+              <div class="resultTop">
+                <div class="resultTop__left">
+                  <div class="resultTop__label">Result preview</div>
+                </div>
+
+                <div class="resultTop__right">
+                  <button class="iconBtn" type="button" id="downloadBagBtn" title="Download bag">⤓</button>
+                </div>
+              </div>
+
+              <div class="resultBox">
+                <img id="generatedBagImg" class="resultImg" src="assets/bag-red.png" alt="Generated bag" />
+              </div>
+
+              <div class="row">
+                <button class="btn btn--ghost" data-action="back">Back</button>
+                <button class="btn btn--primary" type="button" id="toTryOnBtn">Upload full-body photo</button>
+              </div>
+
+              <div class="status" id="status4" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- STEP 5 -->
+        <section class="step" data-step="5">
+          <div class="cardGrid cardGrid--single">
+            <div class="card">
+              <div class="card__kicker">Step 5</div>
+              <h2 class="card__title">Try it on</h2>
+              <p class="card__text">Upload a full-body photo. Prompt used: “make the woman hold the bag”.</p>
+
+              <button class="drop" type="button" id="personBtn">
+                <span class="drop__icon">▢</span>
+                <span id="personLabel">Upload or drag & drop full-body image...</span>
+              </button>
+
+              <div class="resultTop" style="margin-top:14px;">
+                <div class="resultTop__left">
+                  <div class="resultTop__label">Try-on preview</div>
+                </div>
+
+                <div class="resultTop__right">
+                  <button class="iconBtn" type="button" id="downloadTryOnBtn" title="Download try-on">⤓</button>
+                </div>
+              </div>
+
+              <div class="resultBox">
+                <img id="tryOnImg" class="resultImg" src="assets/wear.png" alt="Try-on result" />
+              </div>
+
+              <div class="row">
+                <button class="btn btn--ghost" data-action="back">Back</button>
+                <button class="btn btn--primary" type="button" id="generateTryOnBtn">Generate try-on</button>
+              </div>
+
+              <div class="row row--secondary">
+                <button class="btn btn--ghost" data-action="restart">Start over</button>
+              </div>
+
+              <div class="status" id="status5" aria-live="polite"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer__inner">
+        <div class="footerBrand">
+          <span class="footerBrand__name">Rebirth Creative Studio</span>
+          <span class="footerBrand__ai">AI</span>
+        </div>
+        <div class="footerTag">Design luxury from your own clothing</div>
+        <div class="footerCopy">© 2025 Rebirth Creative Studio AI. All rights reserved.</div>
+      </div>
+    </footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="flow.js"></script>
+  </body>
+</html>

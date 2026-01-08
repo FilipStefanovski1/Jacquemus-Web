@@ -14,6 +14,9 @@
 
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="flow.css" />
+
+    <!-- Optional GSAP (animations). If you don't want it, remove this line. -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   </head>
 
   <body>
@@ -34,11 +37,10 @@
 
     <main class="app">
       <div class="wrap">
-        <!-- Header block like the landing -->
         <section class="appHero">
           <h1 class="appHero__title">Create <span class="appHero__italic">Your</span> Handbag</h1>
           <p class="appHero__sub">
-            Pick a base bag, upload your fabric texture, generate the new material, then try it on with a full-body image.
+            Choose a Jacquemus model, upload your fabric texture, generate the new material, then try it on with a full-body image.
           </p>
 
           <div class="progress">
@@ -47,9 +49,8 @@
               <span class="progress__dot" data-dot="2"></span>
               <span class="progress__dot" data-dot="3"></span>
               <span class="progress__dot" data-dot="4"></span>
-              <span class="progress__dot" data-dot="5"></span>
             </div>
-            <div class="progress__label" id="progressLabel">Step 1 of 5</div>
+            <div class="progress__label" id="progressLabel">Step 1 of 4</div>
           </div>
         </section>
 
@@ -61,24 +62,49 @@
         <section class="step is-active" data-step="1">
           <div class="cardGrid">
             <div class="card">
-              <div class="card__kicker">Step 1</div>
-              <h2 class="card__title">Select a bag</h2>
-              <p class="card__text">Pick a Jacquemus bag base. This is the shape we keep consistent.</p>
+              <h2 class="card__title">Select a Jacquemus model</h2>
+              <p class="card__text">Pick the base bag model. We keep the shape consistent and only change the material.</p>
 
-              <div class="bagGrid" id="formThumbs">
-                <button class="bagTile is-active" type="button" data-bag="assets/bag-red.png">
-                  <img src="assets/bag-red.png" alt="Bag option" />
+              <div class="bagGrid bagGrid--4" id="formThumbs">
+                <button
+                  class="bagTile is-active"
+                  type="button"
+                  data-bag="assets/Black Large Bambino.png"
+                  data-name="The Large Bambino (Black)"
+                >
+                  <img src="assets/Black Large Bambino.png" alt="The Large Bambino (Black)" />
                 </button>
-                <button class="bagTile" type="button" data-bag="assets/bag-black.png">
-                  <img src="assets/bag-black.png" alt="Bag option" />
+
+                <button
+                  class="bagTile"
+                  type="button"
+                  data-bag="assets/Black The Bambino.png"
+                  data-name="The Bambino (Black)"
+                >
+                  <img src="assets/Black The Bambino.png" alt="The Bambino (Black)" />
                 </button>
-                <button class="bagTile" type="button" data-bag="assets/bag-white.png">
-                  <img src="assets/bag-white.png" alt="Bag option" />
+
+                <button
+                  class="bagTile"
+                  type="button"
+                  data-bag="assets/Black The Bisou Perle.png"
+                  data-name="The Bisou Perle (Black)"
+                >
+                  <img src="assets/Black The Bisou Perle.png" alt="The Bisou Perle (Black)" />
+                </button>
+
+                <button
+                  class="bagTile"
+                  type="button"
+                  data-bag="assets/The Large Chiquito.png"
+                  data-name="The Large Chiquito"
+                >
+                  <img src="assets/The Large Chiquito.png" alt="The Large Chiquito" />
                 </button>
               </div>
 
               <div class="monoLine">
-                Selected: <span id="selectedBagName">assets/bag-red.png</span>
+                Selected: <span id="selectedBagName">The Large Bambino (Black)</span>
               </div>
 
               <div class="row">
@@ -90,13 +116,12 @@
             <div class="card card--preview">
               <div class="previewTop">
                 <div>
-                  <div class="card__kicker">Preview</div>
                   <div class="previewTop__title">Base bag</div>
                 </div>
               </div>
 
               <div class="previewBox">
-                <img id="bagPreview" class="previewImg" src="assets/bag-red.png" alt="Bag preview" />
+                <img id="bagPreview" class="previewImg" src="assets/Black Large Bambino.png" alt="Bag preview" />
               </div>
             </div>
           </div>
@@ -106,47 +131,6 @@
         <section class="step" data-step="2">
           <div class="cardGrid">
             <div class="card">
-              <div class="card__kicker">Step 2</div>
-              <h2 class="card__title">Optional palette</h2>
-              <p class="card__text">This step is optional. The main transformation happens in Step 3 with your fabric.</p>
-
-              <div class="paletteRow" id="swatchesRow" aria-label="Color palette">
-                <button class="swatch s1" type="button" aria-label="swatch"></button>
-                <button class="swatch s2" type="button" aria-label="swatch"></button>
-                <button class="swatch s3" type="button" aria-label="swatch"></button>
-                <button class="swatch s4" type="button" aria-label="swatch"></button>
-                <button class="swatch s5" type="button" aria-label="swatch"></button>
-                <button class="swatch s6" type="button" aria-label="swatch"></button>
-                <button class="swatch s7" type="button" aria-label="swatch"></button>
-                <button class="swatch s8" type="button" aria-label="swatch"></button>
-              </div>
-
-              <div class="row">
-                <button class="btn btn--ghost" data-action="back">Back</button>
-                <button class="btn btn--primary" data-action="next">Continue</button>
-              </div>
-            </div>
-
-            <div class="card card--preview">
-              <div class="previewTop">
-                <div>
-                  <div class="card__kicker">Preview</div>
-                  <div class="previewTop__title">Selected bag</div>
-                </div>
-              </div>
-
-              <div class="previewBox">
-                <img id="bagPreview2" class="previewImg" src="assets/bag-red.png" alt="Bag preview" />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- STEP 3 -->
-        <section class="step" data-step="3">
-          <div class="cardGrid cardGrid--single">
-            <div class="card">
-              <div class="card__kicker">Step 3</div>
               <h2 class="card__title">Upload your fabric texture</h2>
               <p class="card__text">
                 Upload a fabric image. Prompt used: “wrap the bag of image 1 in the texture of image 2”.
@@ -161,7 +145,7 @@
                 <div class="mini">
                   <div class="mini__label">Bag</div>
                   <div class="mini__box">
-                    <img id="bagMini" src="assets/bag-red.png" alt="Selected bag" />
+                    <img id="bagMini" src="assets/Black Large Bambino.png" alt="Selected bag" />
                   </div>
                 </div>
 
@@ -179,18 +163,29 @@
                 <button class="btn btn--primary" type="button" id="generateBagBtn">Generate bag with fabric</button>
               </div>
 
-              <div class="status" id="status3" aria-live="polite"></div>
+              <div class="status" id="status2" aria-live="polite"></div>
+            </div>
+
+            <div class="card card--preview">
+              <div class="previewTop">
+                <div>
+                  <div class="previewTop__title">Selected bag</div>
+                </div>
+              </div>
+
+              <div class="previewBox">
+                <img id="bagPreview2" class="previewImg" src="assets/Black Large Bambino.png" alt="Bag preview" />
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- STEP 4 -->
-        <section class="step" data-step="4">
+        <!-- STEP 3 -->
+        <section class="step" data-step="3">
           <div class="cardGrid cardGrid--single">
             <div class="card">
-              <div class="card__kicker">Step 4</div>
               <h2 class="card__title">Your generated bag</h2>
-              <p class="card__text">Download it, or move forward to try-on.</p>
+              <p class="card__text">Download it, save it, share it, or move forward to try-on.</p>
 
               <div class="resultTop">
                 <div class="resultTop__left">
@@ -199,11 +194,13 @@
 
                 <div class="resultTop__right">
                   <button class="iconBtn" type="button" id="downloadBagBtn" title="Download bag">⤓</button>
+                  <button class="iconBtn" type="button" id="saveBagBtn" title="Save design">♥</button>
+                  <button class="iconBtn" type="button" id="shareBagBtn" title="Share">↗</button>
                 </div>
               </div>
 
               <div class="resultBox">
-                <img id="generatedBagImg" class="resultImg" src="assets/bag-red.png" alt="Generated bag" />
+                <img id="generatedBagImg" class="resultImg" src="assets/Black Large Bambino.png" alt="Generated bag" />
               </div>
 
               <div class="row">
@@ -211,16 +208,19 @@
                 <button class="btn btn--primary" type="button" id="toTryOnBtn">Upload full-body photo</button>
               </div>
 
-              <div class="status" id="status4" aria-live="polite"></div>
+              <div class="status" id="status3" aria-live="polite"></div>
+              <div class="hint">
+                Tip: On mobile, Share often shows Instagram. If not, Download then upload in Instagram manually.
+                <a class="hintLink" href="https://www.instagram.com/" target="_blank" rel="noreferrer">Open Instagram</a>
+              </div>
             </div>
           </div>
         </section>
 
-        <!-- STEP 5 -->
-        <section class="step" data-step="5">
+        <!-- STEP 4 -->
+        <section class="step" data-step="4">
           <div class="cardGrid cardGrid--single">
             <div class="card">
-              <div class="card__kicker">Step 5</div>
               <h2 class="card__title">Try it on</h2>
               <p class="card__text">Upload a full-body photo. Prompt used: “make the woman hold the bag”.</p>
 
@@ -236,6 +236,8 @@
 
                 <div class="resultTop__right">
                   <button class="iconBtn" type="button" id="downloadTryOnBtn" title="Download try-on">⤓</button>
+                  <button class="iconBtn" type="button" id="saveTryOnBtn" title="Save design">♥</button>
+                  <button class="iconBtn" type="button" id="shareTryOnBtn" title="Share">↗</button>
                 </div>
               </div>
 
@@ -252,9 +254,30 @@
                 <button class="btn btn--ghost" data-action="restart">Start over</button>
               </div>
 
-              <div class="status" id="status5" aria-live="polite"></div>
+              <div class="status" id="status4" aria-live="polite"></div>
+              <div class="hint">
+                Tip: If Share doesn’t show Instagram, hit Download and upload it inside Instagram.
+                <a class="hintLink" href="https://www.instagram.com/" target="_blank" rel="noreferrer">Open Instagram</a>
+              </div>
             </div>
           </div>
+        </section>
+
+        <!-- SAVED DESIGNS (persistent via localStorage) -->
+        <section class="saved" id="saved">
+          <div class="savedTop">
+            <div>
+              <h2 class="savedTitle">Saved Designs</h2>
+              <p class="savedSub">Saved on this device. You can download, share, or delete them.</p>
+            </div>
+
+            <div class="savedActions">
+              <button class="btn btn--ghost" type="button" id="clearSavedBtn">Clear all</button>
+            </div>
+          </div>
+
+          <div class="savedGrid" id="savedGrid"></div>
+          <div class="savedEmpty" id="savedEmpty">No saved designs yet.</div>
         </section>
       </div>
     </main>
@@ -269,8 +292,7 @@
         <div class="footerCopy">© 2025 Rebirth Creative Studio AI. All rights reserved.</div>
       </div>
     </footer>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
     <script src="flow.js"></script>
   </body>
 </html>

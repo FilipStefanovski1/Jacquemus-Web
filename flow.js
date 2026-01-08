@@ -1,6 +1,6 @@
-// flow.js (animated)
-// Keeps your AI logic but adds premium transitions with GSAP.
-// Requires gsap on the page. If gsap isn't present, everything still works.
+// flow.js (4-step, with correct bag asset names)
+// NOTE: This will NOT work reliably if you open the HTML via file://
+// Run a local server (Vite / Live Server / python http.server) and it will work.
 
 const steps = Array.from(document.querySelectorAll(".step"));
 const progressLabel = document.getElementById("progressLabel");
@@ -8,75 +8,30 @@ const dots = Array.from(document.querySelectorAll(".progress__dot"));
 
 let current = 1;
 
-// state
+// --------- STATE ----------
+const BAG_OPTIONS = [
+  { src: "assets/Black Large Bambino.png", name: "Black Large Bambino" },
+  { src: "assets/Black The Bambino.png", name: "Black The Bambino" },
+  { src: "assets/Black The Bisou Perle.png", name: "Black The Bisou Perle" },
+  { src: "assets/The Large Chiquito.png", name: "The Large Chiquito" },
+];
+
 const state = {
-  bagUrl: "assets/bag-red.png",
+  bagUrl: BAG_OPTIONS[0].src,
+  bagName: BAG_OPTIONS[0].name,
+
   fabricFile: null,
   personFile: null,
+
   generatedBagDataUrl: null,
   tryOnDataUrl: null,
 };
 
 function setStatus(id, msg) {
   const el = document.getElementById(id);
-  if (el) el.textContent = msg;
+  if (el) el.textContent = msg || "";
 }
 
-/* ==========================
-   ANIMATION HELPERS
-   ========================== */
-const hasGSAP = typeof window.gsap !== "undefined";
-
-function animEnterStep(stepEl) {
-  if (!hasGSAP || !stepEl) return;
-
-  // gentle premium entrance
-  gsap.fromTo(
-    stepEl,
-    { opacity: 0, y: 12, scale: 0.995 },
-    { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "power2.out" }
-  );
-}
-
-function animSwapImg(imgEl) {
-  if (!hasGSAP || !imgEl) return;
-
-  gsap.fromTo(
-    imgEl,
-    { opacity: 0, scale: 0.985 },
-    { opacity: 1, scale: 1, duration: 0.35, ease: "power2.out" }
-  );
-}
-
-function animDotActive(dotEl) {
-  if (!hasGSAP || !dotEl) return;
-
-  gsap.fromTo(
-    dotEl,
-    { scale: 0.8 },
-    { scale: 1.15, duration: 0.18, yoyo: true, repeat: 1, ease: "power2.out" }
-  );
-}
-
-function animSuccessPulse(el) {
-  if (!hasGSAP || !el) return;
-
-  gsap.fromTo(
-    el,
-    { boxShadow: "0 0 0 0 rgba(138,92,16,0.0)" },
-    {
-      boxShadow: "0 0 0 8px rgba(138,92,16,0.14)",
-      duration: 0.22,
-      yoyo: true,
-      repeat: 1,
-      ease: "power2.out",
-    }
-  );
-}
-
-/* ==========================
-   PROGRESS + STEP SWITCH
-   ========================== */
 function setProgressUI() {
   if (progressLabel) progressLabel.textContent = `Step ${current} of ${steps.length}`;
 
@@ -86,14 +41,9 @@ function setProgressUI() {
     if (n < current) d.classList.add("is-done");
     if (n === current) d.classList.add("is-active");
   });
-
-  // animate active dot
-  const activeDot = dots.find((d) => Number(d.dataset.dot) === current);
-  animDotActive(activeDot);
 }
 
 function showStep(n) {
-  const prev = current;
   current = Math.max(1, Math.min(steps.length, n));
 
   steps.forEach((s) => {
@@ -105,20 +55,15 @@ function showStep(n) {
   if (backBtn) backBtn.disabled = current === 1;
 
   setProgressUI();
-
-  // small scroll reset like you had
   window.scrollTo({ top: 0, behavior: "smooth" });
-
-  // animate entering step (only when changing steps)
-  if (prev !== current) animEnterStep(activeStep);
 }
 
+// --------- NAV BUTTONS ----------
 document.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
 
   const action = btn.dataset.action;
-
   if (action === "next") showStep(current + 1);
   if (action === "back") showStep(current - 1);
 
@@ -128,87 +73,88 @@ document.addEventListener("click", (e) => {
     state.generatedBagDataUrl = null;
     state.tryOnDataUrl = null;
 
-    document.getElementById("fabricLabel").textContent = "Upload or drag & drop fabric image...";
-    document.getElementById("personLabel").textContent = "Upload or drag & drop full-body image...";
+    // reset labels
+    const fabricLabel = document.getElementById("fabricLabel");
+    const personLabel = document.getElementById("personLabel");
+    if (fabricLabel) fabricLabel.textContent = "Upload or drag & drop fabric image...";
+    if (personLabel) personLabel.textContent = "Upload or drag & drop full-body image...";
 
+    // reset fabric preview
     const fabricMini = document.getElementById("fabricMini");
     const fabricMiniEmpty = document.getElementById("fabricMiniEmpty");
-    fabricMini.style.display = "none";
-    fabricMiniEmpty.style.display = "block";
+    if (fabricMini) fabricMini.style.display = "none";
+    if (fabricMiniEmpty) fabricMiniEmpty.style.display = "block";
 
-    document.getElementById("generatedBagImg").src = state.bagUrl;
-    document.getElementById("tryOnImg").src = "assets/wear.png";
+    // reset images back to base
+    const genImg = document.getElementById("generatedBagImg");
+    const tryImg = document.getElementById("tryOnImg");
+    if (genImg) genImg.src = state.bagUrl;
+    if (tryImg) tryImg.src = "assets/wear.png";
 
+    setStatus("status2", "");
     setStatus("status3", "");
     setStatus("status4", "");
-    setStatus("status5", "");
-
-    // reset swatch visual
-    const swatches = Array.from(document.querySelectorAll(".swatch"));
-    swatches.forEach((s) => s.classList.remove("is-active"));
 
     showStep(1);
   }
 });
 
-/* ==========================
-   STEP 1: bag selection
-   ========================== */
+// --------- STEP 1: BAG SELECTION ----------
 const formThumbs = document.getElementById("formThumbs");
 const bagPreview = document.getElementById("bagPreview");
-const bagPreview2 = document.getElementById("bagPreview2");
 const bagMini = document.getElementById("bagMini");
 const selectedBagName = document.getElementById("selectedBagName");
+
+function syncBagEverywhere() {
+  if (selectedBagName) selectedBagName.textContent = state.bagName;
+  if (bagPreview) bagPreview.src = state.bagUrl;
+  if (bagMini) bagMini.src = state.bagUrl;
+
+  // Step 3 left mini bag might exist on screen later
+  const bagMini2 = document.getElementById("bagMini2");
+  if (bagMini2) bagMini2.src = state.bagUrl;
+
+  // If bag not generated yet, Step 3 result should show selected base
+  const genImg = document.getElementById("generatedBagImg");
+  if (genImg && !state.generatedBagDataUrl) genImg.src = state.bagUrl;
+}
 
 if (formThumbs) {
   formThumbs.addEventListener("click", (e) => {
     const t = e.target.closest(".bagTile");
     if (!t) return;
 
+    // UI
     formThumbs.querySelectorAll(".bagTile").forEach((x) => x.classList.remove("is-active"));
     t.classList.add("is-active");
 
+    // data
     const bag = t.dataset.bag;
+    const name = t.dataset.name;
+
     if (!bag) return;
 
     state.bagUrl = bag;
-    selectedBagName.textContent = bag;
+    state.bagName = name || bag;
 
-    bagPreview.src = bag;
-    bagPreview2.src = bag;
-    bagMini.src = bag;
+    // if user changes base bag after generating, reset generated result (optional but cleaner)
+    // comment this out if you want to keep old generated bag
+    state.generatedBagDataUrl = null;
+    state.tryOnDataUrl = null;
 
-    animSwapImg(bagPreview);
-    animSwapImg(bagPreview2);
-    animSwapImg(bagMini);
+    // sync previews
+    syncBagEverywhere();
 
-    // if bag not generated yet, keep step 4 preview synced
-    if (!state.generatedBagDataUrl) {
-      const gen = document.getElementById("generatedBagImg");
-      gen.src = bag;
-      animSwapImg(gen);
-    }
+    // also reset try-on preview image placeholder
+    const tryImg = document.getElementById("tryOnImg");
+    if (tryImg) tryImg.src = "assets/wear.png";
   });
 }
 
-/* ==========================
-   STEP 2: swatch selection (visual only)
-   ========================== */
-const swatchesRow = document.getElementById("swatchesRow");
-if (swatchesRow) {
-  swatchesRow.addEventListener("click", (e) => {
-    const sw = e.target.closest(".swatch");
-    if (!sw) return;
-    swatchesRow.querySelectorAll(".swatch").forEach((x) => x.classList.remove("is-active"));
-    sw.classList.add("is-active");
+// Initial sync
+syncBagEverywhere();
 
-    animDotActive(sw); // subtle little pop
-  });
-}
-
-/* ==========================
-   STEP 3: fabric upload
-   ========================== */
+// --------- STEP 2: FABRIC UPLOAD + GENERATE BAG ----------
 const fabricInput = document.getElementById("fabricInput");
 const fabricBtn = document.getElementById("fabricBtn");
 const fabricLabel = document.getElementById("fabricLabel");
@@ -224,83 +170,114 @@ if (fabricBtn && fabricInput) {
     if (!file) return;
 
     state.fabricFile = file;
-    fabricLabel.textContent = file.name;
+    if (fabricLabel) fabricLabel.textContent = file.name;
 
     const url = URL.createObjectURL(file);
-    fabricMini.src = url;
-    fabricMini.style.display = "block";
-    fabricMiniEmpty.style.display = "none";
-
-    animSwapImg(fabricMini);
-    animSuccessPulse(fabricBtn);
+    if (fabricMini) {
+      fabricMini.src = url;
+      fabricMini.style.display = "block";
+    }
+    if (fabricMiniEmpty) fabricMiniEmpty.style.display = "none";
   });
 }
 
+// Helper: fetch local bag image as blob (works when served over http://, not file://)
 async function fileToBlobFromUrl(url) {
   const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to load local bag image: " + url);
   return await res.blob();
 }
 
-generateBagBtn.addEventListener("click", async () => {
-  if (!state.fabricFile) {
-    setStatus("status3", "Upload a fabric image first.");
-    return;
-  }
+if (generateBagBtn) {
+  generateBagBtn.addEventListener("click", async () => {
+    if (!state.fabricFile) {
+      setStatus("status2", "Upload a fabric image first.");
+      return;
+    }
 
-  setStatus("status3", "Generating bag...");
+    setStatus("status2", "Generating bag...");
 
-  // loading micro animation on button
-  if (hasGSAP) gsap.to(generateBagBtn, { opacity: 0.75, duration: 0.15 });
+    try {
+      const bagBlob = await fileToBlobFromUrl(state.bagUrl);
 
-  try {
-    const bagBlob = await fileToBlobFromUrl(state.bagUrl);
+      const fd = new FormData();
+      fd.append("bag", bagBlob, "bag.png");
+      fd.append("fabric", state.fabricFile, state.fabricFile.name);
+      fd.append("prompt", "wrap the bag of image 1 in the texture of image 2");
 
-    const fd = new FormData();
-    fd.append("bag", bagBlob, "bag.png");
-    fd.append("fabric", state.fabricFile, state.fabricFile.name);
-    fd.append("prompt", "wrap the bag of image 1 in the texture of image 2");
+      // IMPORTANT: This only works if you have the Vercel function locally or deployed.
+      // If you're running just static HTML, this will fail ("Failed to fetch").
+      const res = await fetch("/api/generate-bag", { method: "POST", body: fd });
+      const data = await res.json();
 
-    const res = await fetch("/api/generate-bag", { method: "POST", body: fd });
-    const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Generation failed");
 
-    if (!res.ok) throw new Error(data?.error || "Generation failed");
+      state.generatedBagDataUrl = data.image;
 
-    state.generatedBagDataUrl = data.image;
+      const genImg = document.getElementById("generatedBagImg");
+      if (genImg) genImg.src = state.generatedBagDataUrl;
 
-    const genImg = document.getElementById("generatedBagImg");
-    genImg.src = state.generatedBagDataUrl;
-    animSwapImg(genImg);
+      setStatus("status2", "Done.");
+      showStep(3);
+    } catch (err) {
+      setStatus("status2", "Error: " + err.message);
+    }
+  });
+}
 
-    setStatus("status3", "Done.");
-    if (hasGSAP) gsap.to(generateBagBtn, { opacity: 1, duration: 0.15 });
+// --------- STEP 3: DOWNLOAD / SHARE / GO TRY-ON ----------
+const downloadBagBtn = document.getElementById("downloadBagBtn");
+const toTryOnBtn = document.getElementById("toTryOnBtn");
+const shareBagBtn = document.getElementById("shareBagBtn");
 
-    showStep(4);
-  } catch (err) {
-    setStatus("status3", "Error: " + err.message);
-    if (hasGSAP) gsap.to(generateBagBtn, { opacity: 1, duration: 0.15 });
-  }
-});
+if (downloadBagBtn) {
+  downloadBagBtn.addEventListener("click", () => {
+    const src = state.generatedBagDataUrl || state.bagUrl;
+    downloadAny(src, "rebirth-bag.png");
+  });
+}
 
-/* ==========================
-   STEP 4: download + continue
-   ========================== */
-document.getElementById("downloadBagBtn").addEventListener("click", () => {
-  if (!state.generatedBagDataUrl) return;
-  downloadDataUrl(state.generatedBagDataUrl, "rebirth-bag.png");
-});
+if (toTryOnBtn) {
+  toTryOnBtn.addEventListener("click", () => showStep(4));
+}
 
-document.getElementById("toTryOnBtn").addEventListener("click", () => {
-  showStep(5);
-});
+// Optional share button (if you added it in HTML)
+if (shareBagBtn) {
+  shareBagBtn.addEventListener("click", async () => {
+    const src = state.generatedBagDataUrl;
+    if (!src) {
+      setStatus("status3", "Generate a bag first.");
+      return;
+    }
 
-/* ==========================
-   STEP 5: person upload + try-on
-   ========================== */
+    try {
+      if (!navigator.share) {
+        setStatus("status3", "Sharing not supported on this device/browser.");
+        return;
+      }
+
+      const blob = dataUrlToBlob(src);
+      const file = new File([blob], "rebirth-bag.png", { type: blob.type });
+
+      await navigator.share({
+        title: "Rebirth Bag Design",
+        text: "My Rebirth bag design",
+        files: [file],
+      });
+
+      setStatus("status3", "Shared.");
+    } catch (err) {
+      setStatus("status3", "Share cancelled.");
+    }
+  });
+}
+
+// --------- STEP 4: PERSON UPLOAD + TRY-ON ----------
 const personInput = document.getElementById("personInput");
 const personBtn = document.getElementById("personBtn");
 const personLabel = document.getElementById("personLabel");
 const generateTryOnBtn = document.getElementById("generateTryOnBtn");
+const downloadTryOnBtn = document.getElementById("downloadTryOnBtn");
 
 if (personBtn && personInput) {
   personBtn.addEventListener("click", () => personInput.click());
@@ -309,62 +286,57 @@ if (personBtn && personInput) {
     const file = personInput.files?.[0];
     if (!file) return;
     state.personFile = file;
-    personLabel.textContent = file.name;
-
-    animSuccessPulse(personBtn);
+    if (personLabel) personLabel.textContent = file.name;
   });
 }
 
-generateTryOnBtn.addEventListener("click", async () => {
-  if (!state.generatedBagDataUrl) {
-    setStatus("status5", "Generate the bag first.");
-    return;
-  }
-  if (!state.personFile) {
-    setStatus("status5", "Upload a full-body photo first.");
-    return;
-  }
+if (generateTryOnBtn) {
+  generateTryOnBtn.addEventListener("click", async () => {
+    if (!state.generatedBagDataUrl) {
+      setStatus("status4", "Generate the bag first.");
+      return;
+    }
+    if (!state.personFile) {
+      setStatus("status4", "Upload a full-body photo first.");
+      return;
+    }
 
-  setStatus("status5", "Generating try-on...");
+    setStatus("status4", "Generating try-on...");
 
-  if (hasGSAP) gsap.to(generateTryOnBtn, { opacity: 0.75, duration: 0.15 });
+    try {
+      const fd = new FormData();
+      fd.append("person", state.personFile, state.personFile.name);
 
-  try {
-    const fd = new FormData();
-    fd.append("person", state.personFile, state.personFile.name);
+      const bagBlob = dataUrlToBlob(state.generatedBagDataUrl);
+      fd.append("bag", bagBlob, "generated-bag.png");
 
-    const bagBlob = dataUrlToBlob(state.generatedBagDataUrl);
-    fd.append("bag", bagBlob, "generated-bag.png");
+      fd.append("prompt", "make the woman hold the bag");
 
-    fd.append("prompt", "make the woman hold the bag");
+      const res = await fetch("/api/try-on", { method: "POST", body: fd });
+      const data = await res.json();
 
-    const res = await fetch("/api/try-on", { method: "POST", body: fd });
-    const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Try-on failed");
 
-    if (!res.ok) throw new Error(data?.error || "Try-on failed");
+      state.tryOnDataUrl = data.image;
 
-    state.tryOnDataUrl = data.image;
+      const tryImg = document.getElementById("tryOnImg");
+      if (tryImg) tryImg.src = state.tryOnDataUrl;
 
-    const tryImg = document.getElementById("tryOnImg");
-    tryImg.src = state.tryOnDataUrl;
-    animSwapImg(tryImg);
+      setStatus("status4", "Done.");
+    } catch (err) {
+      setStatus("status4", "Error: " + err.message);
+    }
+  });
+}
 
-    setStatus("status5", "Done.");
-    if (hasGSAP) gsap.to(generateTryOnBtn, { opacity: 1, duration: 0.15 });
-  } catch (err) {
-    setStatus("status5", "Error: " + err.message);
-    if (hasGSAP) gsap.to(generateTryOnBtn, { opacity: 1, duration: 0.15 });
-  }
-});
+if (downloadTryOnBtn) {
+  downloadTryOnBtn.addEventListener("click", () => {
+    if (!state.tryOnDataUrl) return;
+    downloadAny(state.tryOnDataUrl, "rebirth-tryon.png");
+  });
+}
 
-document.getElementById("downloadTryOnBtn").addEventListener("click", () => {
-  if (!state.tryOnDataUrl) return;
-  downloadDataUrl(state.tryOnDataUrl, "rebirth-tryon.png");
-});
-
-/* ==========================
-   helpers
-   ========================== */
+// --------- HELPERS ----------
 function dataUrlToBlob(dataUrl) {
   const [meta, b64] = dataUrl.split(",");
   const mime = meta.match(/data:(.*);base64/)?.[1] || "image/png";
@@ -374,9 +346,21 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([arr], { type: mime });
 }
 
-function downloadDataUrl(dataUrl, filename) {
+function downloadAny(src, filename) {
+  // if it's a normal URL (assets/...), just download it
+  if (typeof src === "string" && !src.startsWith("data:")) {
+    const a = document.createElement("a");
+    a.href = src;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    return;
+  }
+
+  // if it's a dataURL
   const a = document.createElement("a");
-  a.href = dataUrl;
+  a.href = src;
   a.download = filename;
   document.body.appendChild(a);
   a.click();

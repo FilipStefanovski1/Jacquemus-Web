@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/flow", "destination": "/flow.html" }
+  ]
+}

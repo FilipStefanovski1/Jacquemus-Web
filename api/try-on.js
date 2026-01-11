@@ -42,6 +42,17 @@ function toInlineData(file) {
   };
 }
 
+async function readJsonOrText(response) {
+  const raw = await response.text();
+  let json = null;
+  try {
+    json = raw ? JSON.parse(raw) : null;
+  } catch {
+    // ignore
+  }
+  return { raw, json };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
 
@@ -49,26 +60,27 @@ export default async function handler(req, res) {
     const { fields, files } = await readMultipart(req);
 
     const apiKey = process.env.GEMINI_API_KEY;
-    // Nano Banana Pro (Gemini 3 Pro Image preview)
-    const model = process.env.GEMINI_IMAGE_MODEL || "gemini-3-pro-image-preview";
 
-    if (!apiKey) return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
-    if (!files.person || !files.bag) return res.status(400).json({ error: "Missing person or bag image" });
+    // safest default, overrideable
+    const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
+
+    if (!apiKey) {
+      return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
+    }
+
+    if (!files.person || !files.bag) {
+      return res.status(400).json({ error: "Missing person or bag image" });
+    }
 
     const prompt = fields.prompt || "make the woman hold the bag";
 
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [
         {
           role: "user",
-          parts: [
-            { text: prompt },
-            toInlineData(files.person),
-            toInlineData(files.bag),
-          ],
+          parts: [{ text: prompt }, toInlineData(files.person), toInlineData(files.bag)],
         },
       ],
       generationConfig: {
@@ -82,25 +94,36 @@ export default async function handler(req, res) {
       body: JSON.stringify(payload),
     });
 
-    const data = await r.json();
+    const { raw, json } = await readJsonOrText(r);
 
     if (!r.ok) {
-      return res.status(500).json({
-        error: data?.error?.message || "Gemini API error",
-        details: data,
+      return res.status(r.status).json({
+        error: json?.error?.message || "Gemini API error",
+        status: r.status,
+        model,
+        raw: raw?.slice(0, 800),
+        details: json || null,
       });
     }
+
+    const data = json;
 
     const parts = data?.candidates?.[0]?.content?.parts || [];
     const imgPart = parts.find((p) => p.inline_data?.data);
 
-    if (!imgPart) return res.status(500).json({ error: "No image returned", raw: data });
+    if (!imgPart) {
+      return res.status(500).json({
+        error: "No image returned",
+        model,
+        raw: data,
+      });
+    }
 
     const mime = imgPart.inline_data.mime_type || "image/png";
     const base64 = imgPart.inline_data.data;
 
     return res.status(200).json({ image: `data:${mime};base64,${base64}` });
   } catch (e) {
-    return res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e?.message || "Server error" });
   }
 }

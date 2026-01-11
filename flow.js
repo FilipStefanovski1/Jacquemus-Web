@@ -9,9 +9,9 @@
    If you deploy to Vercel and your API functions live on the same site:
    const API_BASE = "";
 */
-const API_BASE = ""; // <-- change if needed
+const API_BASE = "";
 
-// API endpoints (kept as /api/* to match your HTML + backend functions)
+// API endpoints
 const ENDPOINTS = {
   generateBag: "/api/generate-bag",
   tryOn: "/api/try-on",
@@ -78,19 +78,14 @@ function showStep(n) {
 }
 
 /* =========================
-   API HELPERS (FIXES JSON + 404 HTML)
+   API HELPERS
    ========================= */
 function apiUrl(path) {
   return `${API_BASE}${path}`;
 }
 
 async function safeJson(res) {
-  // Handles:
-  // - JSON response -> returns object
-  // - HTML error page -> throws a clean error
-  // - empty -> returns null
   const text = await res.text();
-
   if (!text) return null;
 
   try {
@@ -98,9 +93,7 @@ async function safeJson(res) {
   } catch {
     const isHtml = text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html");
     if (isHtml) {
-      throw new Error(
-        `API returned HTML (not JSON). This usually means the route doesn't exist or you're hitting the wrong server. Status: ${res.status}`
-      );
+      throw new Error(`API returned HTML (not JSON). Status: ${res.status}`);
     }
     throw new Error(`API returned non-JSON. Status: ${res.status}`);
   }
@@ -109,8 +102,14 @@ async function safeJson(res) {
 function explainLikelyCause(status, endpointPath) {
   if (status === 404) {
     return (
-      `\n\nLikely cause: Your frontend is running, but the API route "${endpointPath}" is not available on this server.\n` +
-      `Fix: Run the backend that exposes /api/* (or deploy it), OR set API_BASE to your backend URL.`
+      `\n\nLikely cause: API route "${endpointPath}" is not available on this server.\n` +
+      `Fix: Deploy the /api function or set API_BASE to the backend URL.`
+    );
+  }
+  if (status === 401 || status === 403) {
+    return (
+      `\n\nLikely cause: Key/model permissions or API restrictions (Gemini returned ${status}).\n` +
+      `Fix: Check GEMINI_API_KEY + GEMINI_IMAGE_MODEL on Vercel, and key restrictions in Google.`
     );
   }
   return "";
@@ -147,13 +146,14 @@ document.addEventListener("click", (e) => {
 
     // reset images
     const genImg = document.getElementById("generatedBagImg");
-    const tryImg = document.getElementById("tryOnImg");
     if (genImg) genImg.src = state.bagUrl;
 
-    // IMPORTANT: make sure this file exists exactly:
-    // - If your file is assets/wear.png keep as is
-    // - If your file is wear.png in root, change to "wear.png"
-    if (tryImg) tryImg.src = "assets/wear.png";
+    // IMPORTANT: no more wear.png placeholder
+    const tryImg = document.getElementById("tryOnImg");
+    if (tryImg) {
+      tryImg.removeAttribute("src");
+      tryImg.style.display = "none";
+    }
 
     setStatus("status2", "");
     setStatus("status3", "");
@@ -178,7 +178,6 @@ function syncBagEverywhere() {
   if (bagPreview2) bagPreview2.src = state.bagUrl;
   if (bagMini) bagMini.src = state.bagUrl;
 
-  // If bag not generated yet, Step 3 result should show selected base
   const genImg = document.getElementById("generatedBagImg");
   if (genImg && !state.generatedBagDataUrl) genImg.src = state.bagUrl;
 }
@@ -193,21 +192,22 @@ if (formThumbs) {
 
     const bag = t.dataset.bag;
     const name = t.dataset.name;
-
     if (!bag) return;
 
     state.bagUrl = bag;
     state.bagName = name || bag;
 
-    // Optional: changing base bag resets generated content so UI stays consistent
     state.generatedBagDataUrl = null;
     state.tryOnDataUrl = null;
 
     syncBagEverywhere();
 
-    // reset try-on preview
+    // reset try-on preview (no placeholder)
     const tryImg = document.getElementById("tryOnImg");
-    if (tryImg) tryImg.src = "assets/wear.png";
+    if (tryImg) {
+      tryImg.removeAttribute("src");
+      tryImg.style.display = "none";
+    }
   });
 }
 
@@ -219,9 +219,7 @@ syncBagEverywhere();
 function wireDropZone(buttonEl, onFile) {
   if (!buttonEl) return;
 
-  buttonEl.addEventListener("dragover", (e) => {
-    e.preventDefault();
-  });
+  buttonEl.addEventListener("dragover", (e) => e.preventDefault());
 
   buttonEl.addEventListener("drop", (e) => {
     e.preventDefault();
@@ -267,7 +265,6 @@ if (fabricBtn && fabricInput) {
   wireDropZone(fabricBtn, (file) => setFabricFile(file));
 }
 
-// IMPORTANT FIX: filenames have spaces -> use encodeURI
 async function fileToBlobFromUrl(url) {
   const res = await fetch(encodeURI(url));
   if (!res.ok) throw new Error("Failed to load local bag image: " + url);
@@ -292,15 +289,12 @@ if (generateBagBtn) {
       fd.append("prompt", "wrap the bag of image 1 in the texture of image 2");
 
       const url = apiUrl(ENDPOINTS.generateBag);
-
       const res = await fetch(url, { method: "POST", body: fd });
 
-      // Safely parse
       let data;
       try {
         data = await safeJson(res);
       } catch (parseErr) {
-        // If route missing / returned HTML, show a helpful explanation
         const extra = explainLikelyCause(res.status, ENDPOINTS.generateBag);
         throw new Error(parseErr.message + extra);
       }
@@ -427,7 +421,6 @@ if (generateTryOnBtn) {
       fd.append("prompt", "make the woman hold the bag");
 
       const url = apiUrl(ENDPOINTS.tryOn);
-
       const res = await fetch(url, { method: "POST", body: fd });
 
       let data;
@@ -450,7 +443,10 @@ if (generateTryOnBtn) {
       state.tryOnDataUrl = data.image;
 
       const tryImg = document.getElementById("tryOnImg");
-      if (tryImg) tryImg.src = state.tryOnDataUrl;
+      if (tryImg) {
+        tryImg.src = state.tryOnDataUrl;
+        tryImg.style.display = "block";
+      }
 
       setStatus("status4", "Done.");
     } catch (err) {
@@ -509,7 +505,6 @@ function dataUrlToBlob(dataUrl) {
 }
 
 function downloadAny(src, filename) {
-  // Normal URL (assets/...) or data URL both work
   const a = document.createElement("a");
   a.href = src.startsWith("data:") ? src : encodeURI(src);
   a.download = filename;

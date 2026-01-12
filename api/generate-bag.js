@@ -15,8 +15,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "Missing GEMINI_API_KEY" });
     }
 
-    const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [
@@ -33,38 +32,39 @@ export default async function handler(req, res) {
       ],
     };
 
-    const r = await fetch(url, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    const raw = await r.text();
-    let json;
+    const rawText = await response.text();
+    let data;
     try {
-      json = JSON.parse(raw);
+      data = JSON.parse(rawText);
     } catch {
-      json = null;
+      data = null;
     }
 
-    if (!r.ok) {
-      return res.status(r.status).json({
-        error: "Gemini error",
-        status: r.status,
-        raw: raw.slice(0, 800),
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: "Gemini API error",
+        status: response.status,
+        raw: rawText.slice(0, 800),
       });
     }
 
     const text =
-      json?.candidates?.[0]?.content?.parts?.[0]?.text || null;
+      data?.candidates?.[0]?.content?.parts?.[0]?.text ?? null;
 
     return res.status(200).json({
       ok: true,
       model,
       text,
-      raw: json,
     });
-  } catch (e) {
-    return res.status(500).json({ error: e.message });
+  } catch (err) {
+    return res.status(500).json({
+      error: err?.message || "Server error",
+    });
   }
 }

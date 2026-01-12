@@ -53,6 +53,14 @@ async function readJsonOrText(response) {
   return { raw, json };
 }
 
+function extractText(data) {
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  const textParts = parts
+    .map((p) => (typeof p?.text === "string" ? p.text : ""))
+    .filter(Boolean);
+  return textParts.join("\n").trim();
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "Use POST" });
 
@@ -61,32 +69,42 @@ export default async function handler(req, res) {
 
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // safest default (you can override from Vercel env)
-    // if you KNOW you have access to a different one, set GEMINI_IMAGE_MODEL in Vercel.
-    const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
+    // TEXT-only model (safe + widely available)
+    const model = process.env.GEMINI_TEXT_MODEL || "gemini-1.5-pro";
 
     if (!apiKey) {
       return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
     }
-
     if (!files.bag || !files.fabric) {
       return res.status(400).json({ error: "Missing bag or fabric image" });
     }
 
-    const prompt = fields.prompt || "wrap the bag of image 1 in the texture of image 2";
+    const prompt =
+      fields.prompt ||
+      "wrap the bag of image 1 in the texture of image 2";
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
+    // IMPORTANT: TEXT ONLY (no IMAGE modality)
     const payload = {
       contents: [
         {
           role: "user",
-          parts: [{ text: prompt }, toInlineData(files.bag), toInlineData(files.fabric)],
+          parts: [
+            {
+              text:
+                `${prompt}\n\n` +
+                `You are given two images:\n` +
+                `- Image 1: bag (keep the exact bag shape)\n` +
+                `- Image 2: fabric texture\n\n` +
+                `Return ONLY a short, precise editing prompt that an image editor could use to apply the fabric texture onto the bag while preserving lighting, shadows, and logos. ` +
+                `Do not mention safety policies. Do not add extra explanation.`,
+            },
+            toInlineData(files.bag),
+            toInlineData(files.fabric),
+          ],
         },
       ],
-      generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"],
-      },
     };
 
     const r = await fetch(url, {
@@ -97,34 +115,26 @@ export default async function handler(req, res) {
 
     const { raw, json } = await readJsonOrText(r);
 
-    // if Gemini blocks it, KEEP the real status (403 etc)
     if (!r.ok) {
       return res.status(r.status).json({
         error: json?.error?.message || "Gemini API error",
         status: r.status,
         model,
-        raw: raw?.slice(0, 800),
+        raw: raw?.slice(0, 1200),
         details: json || null,
       });
     }
 
-    const data = json;
+    const text = extractText(json);
 
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const imgPart = parts.find((p) => p.inline_data?.data);
-
-    if (!imgPart) {
-      return res.status(500).json({
-        error: "No image returned",
-        model,
-        raw: data,
-      });
-    }
-
-    const mime = imgPart.inline_data.mime_type || "image/png";
-    const base64 = imgPart.inline_data.data;
-
-    return res.status(200).json({ image: `data:${mime};base64,${base64}` });
+    // No image will be returned in this mode.
+    // Tell the frontend clearly so you can show a message instead of breaking.
+    return res.status(501).json({
+      error:
+        "Image output is not available for your Gemini API setup. This endpoint is running in TEXT-only mode.",
+      model,
+      promptSuggestion: text || null,
+    });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });
   }

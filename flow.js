@@ -305,8 +305,13 @@ if (generateBagBtn) {
       }
 
       if (!data?.image) {
-        throw new Error("API response missing 'image'.");
-      }
+  // New: backend may return promptSuggestion instead
+  const msg = data?.promptSuggestion
+    ? `Image generation not enabled. Suggested prompt:\n\n${data.promptSuggestion}`
+    : (data?.error || "No image returned.");
+
+  throw new Error(msg);
+}
 
       state.generatedBagDataUrl = data.image;
 

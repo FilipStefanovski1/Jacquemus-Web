@@ -1,14 +1,6 @@
 /* =========================
    CONFIG (IMPORTANT)
-   =========================
-   If your API is NOT on the same origin, set it here.
-
-   Example:
-   const API_BASE = "http://localhost:8787";
-
-   If you deploy to Vercel and your API functions live on the same site:
-   const API_BASE = "";
-*/
+   ========================= */
 const API_BASE = "";
 
 // API endpoints
@@ -38,10 +30,8 @@ const BAG_OPTIONS = [
 const state = {
   bagUrl: BAG_OPTIONS[0].src,
   bagName: BAG_OPTIONS[0].name,
-
   fabricFile: null,
   personFile: null,
-
   generatedBagDataUrl: null,
   tryOnDataUrl: null,
 };
@@ -115,6 +105,16 @@ function explainLikelyCause(status, endpointPath) {
   return "";
 }
 
+function formatApiError(data, status, endpointPath) {
+  const extra = explainLikelyCause(status, endpointPath);
+
+  if (!data) return `Request failed (${status})` + extra;
+
+  const msg = data?.error || `Request failed (${status})`;
+  const raw = data?.raw ? `\n\nRaw:\n${String(data.raw).slice(0, 600)}` : "";
+  return msg + extra + raw;
+}
+
 /* =========================
    NAV BUTTONS
    ========================= */
@@ -132,23 +132,19 @@ document.addEventListener("click", (e) => {
     state.generatedBagDataUrl = null;
     state.tryOnDataUrl = null;
 
-    // reset labels
     const fabricLabel = document.getElementById("fabricLabel");
     const personLabel = document.getElementById("personLabel");
     if (fabricLabel) fabricLabel.textContent = "Upload or drag & drop fabric image...";
     if (personLabel) personLabel.textContent = "Upload or drag & drop full-body image...";
 
-    // reset fabric preview
     const fabricMini = document.getElementById("fabricMini");
     const fabricMiniEmpty = document.getElementById("fabricMiniEmpty");
     if (fabricMini) fabricMini.style.display = "none";
     if (fabricMiniEmpty) fabricMiniEmpty.style.display = "block";
 
-    // reset images
     const genImg = document.getElementById("generatedBagImg");
     if (genImg) genImg.src = state.bagUrl;
 
-    // IMPORTANT: no more wear.png placeholder
     const tryImg = document.getElementById("tryOnImg");
     if (tryImg) {
       tryImg.removeAttribute("src");
@@ -202,7 +198,6 @@ if (formThumbs) {
 
     syncBagEverywhere();
 
-    // reset try-on preview (no placeholder)
     const tryImg = document.getElementById("tryOnImg");
     if (tryImg) {
       tryImg.removeAttribute("src");
@@ -300,18 +295,12 @@ if (generateBagBtn) {
       }
 
       if (!res.ok) {
-        const extra = explainLikelyCause(res.status, ENDPOINTS.generateBag);
-        throw new Error((data?.error || `Generation failed (${res.status})`) + extra);
+        throw new Error(formatApiError(data, res.status, ENDPOINTS.generateBag));
       }
 
       if (!data?.image) {
-  // New: backend may return promptSuggestion instead
-  const msg = data?.promptSuggestion
-    ? `Image generation not enabled. Suggested prompt:\n\n${data.promptSuggestion}`
-    : (data?.error || "No image returned.");
-
-  throw new Error(msg);
-}
+        throw new Error("No image returned by API.");
+      }
 
       state.generatedBagDataUrl = data.image;
 
@@ -437,8 +426,7 @@ if (generateTryOnBtn) {
       }
 
       if (!res.ok) {
-        const extra = explainLikelyCause(res.status, ENDPOINTS.tryOn);
-        throw new Error((data?.error || `Try-on failed (${res.status})`) + extra);
+        throw new Error(formatApiError(data, res.status, ENDPOINTS.tryOn));
       }
 
       if (!data?.image) {

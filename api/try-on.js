@@ -15,8 +15,8 @@ function readMultipart(req) {
       file.on("data", (d) => chunks.push(d));
       file.on("end", () => {
         files[name] = {
-          filename: info.filename,
-          mimeType: info.mimeType,
+          filename: info?.filename || "upload",
+          mimeType: info?.mimeType || "application/octet-stream",
           buffer: Buffer.concat(chunks),
         };
       });
@@ -53,12 +53,9 @@ async function readJsonOrText(response) {
   return { raw, json };
 }
 
-function extractText(data) {
+function extractFirstInlineImage(data) {
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const textParts = parts
-    .map((p) => (typeof p?.text === "string" ? p.text : ""))
-    .filter(Boolean);
-  return textParts.join("\n").trim();
+  return parts.find((p) => p?.inline_data?.data);
 }
 
 export default async function handler(req, res) {
@@ -68,18 +65,14 @@ export default async function handler(req, res) {
     const { fields, files } = await readMultipart(req);
 
     const apiKey = process.env.GEMINI_API_KEY;
+    const model = process.env.GEMINI_IMAGE_MODEL || "gemini-3-pro-image-preview";
 
-    // TEXT-only model (safe + widely available)
-    const model = process.env.GEMINI_TEXT_MODEL || "gemini-1.5-pro";
+    if (!apiKey) return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
+    if (!files.person || !files.bag) return res.status(400).json({ error: "Missing person or bag image" });
 
-    if (!apiKey) {
-      return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
-    }
-    if (!files.person || !files.bag) {
-      return res.status(400).json({ error: "Missing person or bag image" });
-    }
-
-    const prompt = fields.prompt || "make the woman hold the bag";
+    const prompt =
+      fields.prompt ||
+      "make the person hold the bag naturally; match scale, perspective, lighting and shadows; realistic composite";
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
@@ -88,20 +81,15 @@ export default async function handler(req, res) {
         {
           role: "user",
           parts: [
-            {
-              text:
-                `${prompt}\n\n` +
-                `You are given two images:\n` +
-                `- Image 1: full-body person photo\n` +
-                `- Image 2: handbag cutout\n\n` +
-                `Return ONLY a short, precise editing prompt that an image editor could use to composite the bag naturally into the person's hands, matching perspective, scale, lighting, and shadows. ` +
-                `No extra explanation.`,
-            },
+            { text: prompt },
             toInlineData(files.person),
             toInlineData(files.bag),
           ],
         },
       ],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+      },
     };
 
     const r = await fetch(url, {
@@ -114,21 +102,37 @@ export default async function handler(req, res) {
 
     if (!r.ok) {
       return res.status(r.status).json({
-        error: json?.error?.message || "Gemini API error",
+        ok: false,
         status: r.status,
         model,
-        raw: raw?.slice(0, 1200),
+        error: json?.error?.message || "Gemini API error",
+        raw: raw?.slice(0, 1600),
         details: json || null,
       });
     }
 
-    const text = extractText(json);
+    const imgPart = extractFirstInlineImage(json);
 
-    return res.status(501).json({
-      error:
-        "Image output is not available for your Gemini API setup. This endpoint is running in TEXT-only mode.",
+    if (!imgPart) {
+      const text =
+        json?.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n") || null;
+
+      return res.status(500).json({
+        ok: false,
+        model,
+        error: "No image returned by model.",
+        text,
+        raw: json,
+      });
+    }
+
+    const mime = imgPart.inline_data.mime_type || "image/png";
+    const base64 = imgPart.inline_data.data;
+
+    return res.status(200).json({
+      ok: true,
       model,
-      promptSuggestion: text || null,
+      image: `data:${mime};base64,${base64}`,
     });
   } catch (e) {
     return res.status(500).json({ error: e?.message || "Server error" });

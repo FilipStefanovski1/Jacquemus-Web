@@ -528,8 +528,32 @@
   .savedGrid{ grid-template-columns: 1fr; }
 }
 
-/* NOTE:
-   I removed the old "transform: scale(1.25)" zoom rule because it can cause
-   cut-off/awkward framing depending on image padding + container sizes.
-   If you want a tiny zoom without cropping, tell me and I’ll set a smaller scale
-   only for thumbnails (not the big previews). */
+/* =========================================
+   SUBTLE ZOOM (no cut-off)
+   ========================================= */
+
+/* Main previews */
+.previewImg,
+.resultImg {
+  transform: scale(1.12);       /* gentle zoom */
+  transform-origin: center;
+}
+
+/* Mini previews (bag + fabric) */
+.mini__box img {
+  transform: scale(1.15);
+  transform-origin: center;
+}
+
+/* Bag selection thumbnails */
+.bagTile img {
+  transform: scale(1.18);
+  transform-origin: center;
+}
+
+/* Saved gallery */
+.savedImg {
+  transform: scale(1.12);
+  transform-origin: center;
+}
+

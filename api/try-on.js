@@ -1,7 +1,3 @@
-export const config = {
-  api: { bodyParser: false },
-};
-
 import Busboy from "busboy";
 
 function readMultipart(req) {
@@ -35,8 +31,8 @@ function readMultipart(req) {
 
 function toInlineData(file) {
   return {
-    inline_data: {
-      mime_type: file.mimeType || "image/png",
+    inlineData: {
+      mimeType: file.mimeType || "image/png",
       data: file.buffer.toString("base64"),
     },
   };
@@ -55,7 +51,7 @@ async function readJsonOrText(response) {
 
 function extractFirstInlineImage(data) {
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  return parts.find((p) => p?.inline_data?.data);
+  return parts.find((p) => p?.inlineData?.data || p?.inline_data?.data) || null;
 }
 
 export default async function handler(req, res) {
@@ -65,7 +61,7 @@ export default async function handler(req, res) {
     const { fields, files } = await readMultipart(req);
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_IMAGE_MODEL || "gemini-3-pro-image-preview";
+    const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
 
     if (!apiKey) return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
     if (!files.person || !files.bag) return res.status(400).json({ error: "Missing person or bag image" });
@@ -80,15 +76,11 @@ export default async function handler(req, res) {
       contents: [
         {
           role: "user",
-          parts: [
-            { text: prompt },
-            toInlineData(files.person),
-            toInlineData(files.bag),
-          ],
+          parts: [{ text: prompt }, toInlineData(files.person), toInlineData(files.bag)],
         },
       ],
       generationConfig: {
-        responseModalities: ["TEXT", "IMAGE"],
+        responseModalities: ["IMAGE"],
       },
     };
 
@@ -126,8 +118,13 @@ export default async function handler(req, res) {
       });
     }
 
-    const mime = imgPart.inline_data.mime_type || "image/png";
-    const base64 = imgPart.inline_data.data;
+    const inline = imgPart.inlineData || imgPart.inline_data;
+    const mime = inline?.mimeType || inline?.mime_type || "image/png";
+    const base64 = inline?.data;
+
+    if (!base64) {
+      return res.status(500).json({ ok: false, model, error: "Image part missing base64 data.", raw: json });
+    }
 
     return res.status(200).json({
       ok: true,

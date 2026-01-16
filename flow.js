@@ -606,5 +606,152 @@ function downloadAny(src, filename) {
   a.remove();
 }
 
+/* =========================
+   SAVED DESIGNS (localStorage)
+   ========================= */
+const SAVED_KEY = "rebirth_saved_designs_v1";
+
+function getSaved() {
+  try {
+    const raw = localStorage.getItem(SAVED_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+
+function setSaved(arr) {
+  localStorage.setItem(SAVED_KEY, JSON.stringify(arr));
+}
+
+function saveCurrentDesign() {
+  const bagImg = state.generatedBagDataUrl;
+  const tryOnImg = state.tryOnDataUrl || null;
+
+  if (!bagImg) return;
+
+  const item = {
+    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    createdAt: Date.now(),
+    bagName: state.bagName || "Jacquemus Bag",
+    bagImage: bagImg,
+    tryOnImage: tryOnImg,
+  };
+
+  const saved = getSaved();
+  saved.unshift(item); // newest first
+  setSaved(saved);
+
+  renderSavedDesigns();
+}
+
+function deleteSavedDesign(id) {
+  const saved = getSaved().filter((x) => x.id !== id);
+  setSaved(saved);
+  renderSavedDesigns();
+}
+
+function clearAllSaved() {
+  setSaved([]);
+  renderSavedDesigns();
+}
+
+function renderSavedDesigns() {
+  const wrap = document.getElementById("savedDesignsWrap");
+  const empty = document.getElementById("savedDesignsEmpty");
+  const clearBtn = document.getElementById("clearSavedBtn");
+
+  if (!wrap) return;
+
+  const saved = getSaved();
+
+  if (clearBtn) clearBtn.style.display = saved.length ? "inline-flex" : "none";
+  if (empty) empty.style.display = saved.length ? "none" : "block";
+
+  wrap.innerHTML = "";
+
+  saved.forEach((item) => {
+    const card = document.createElement("div");
+    card.className = "savedCard";
+
+    const imgSrc = item.tryOnImage || item.bagImage;
+
+    card.innerHTML = `
+      <div class="savedCard__top">
+        <div class="savedCard__meta">
+          <div class="savedCard__title">${escapeHtml(item.bagName)}</div>
+          <div class="savedCard__date">${new Date(item.createdAt).toLocaleString()}</div>
+        </div>
+        <button class="savedCard__delete" data-del="${item.id}">Delete</button>
+      </div>
+
+      <div class="savedCard__imgWrap">
+        <img class="savedCard__img" src="${imgSrc}" alt="Saved design" />
+      </div>
+
+      <div class="savedCard__actions">
+        <button data-dl="${item.id}">Download</button>
+        <button data-share="${item.id}">Share</button>
+      </div>
+    `;
+
+    wrap.appendChild(card);
+  });
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+// Wire buttons
+document.addEventListener("click", async (e) => {
+  const del = e.target.closest("[data-del]")?.dataset?.del;
+  const dl = e.target.closest("[data-dl]")?.dataset?.dl;
+  const share = e.target.closest("[data-share]")?.dataset?.share;
+
+  if (del) return deleteSavedDesign(del);
+
+  if (dl) {
+    const item = getSaved().find((x) => x.id === dl);
+    if (!item) return;
+    const src = item.tryOnImage || item.bagImage;
+    return downloadAny(src, `rebirth-${dl}.png`);
+  }
+
+  if (share) {
+    const item = getSaved().find((x) => x.id === share);
+    if (!item) return;
+
+    const src = item.tryOnImage || item.bagImage;
+
+    try {
+      if (!navigator.share) return;
+
+      const blob = dataUrlToBlob(src);
+      const file = new File([blob], "rebirth-design.png", { type: blob.type });
+
+      await navigator.share({
+        title: "Rebirth Design",
+        text: item.bagName,
+        files: [file],
+      });
+    } catch {}
+  }
+});
+
+// Clear all button (if present)
+const clearSavedBtn = document.getElementById("clearSavedBtn");
+if (clearSavedBtn) clearSavedBtn.addEventListener("click", clearAllSaved);
+
+// Render on load
+renderSavedDesigns();
+
+
 // Start
 showStep(1);

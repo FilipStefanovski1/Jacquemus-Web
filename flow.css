@@ -1,4 +1,5 @@
 /* =========================================
+   flow.css (UPDATED COLORS TO MATCH MOODBOARD)
    FLOW (Atelier-style UI)
    4-step version (no palette step)
    + Saved Designs gallery
@@ -6,15 +7,17 @@
    ========================================= */
 
 :root{
-  --ink:#151515;
-  --muted:#6f6a5f;
-  --line:rgba(0,0,0,.08);
+  /* match main site palette */
+  --ink:#2e2e2e;
+  --muted: rgba(46,46,46,0.62);
+  --line: rgba(46,46,46,.08);
 
   --panel:#ffffff;
-  --panelBorder: rgba(0,0,0,.10);
+  --panelBorder: rgba(46,46,46,.10);
 
-  --gold:#8a5c10;
-  --gold2:#a57418;
+  /* your flow uses "gold" as accent — keep it, but slightly neutral */
+  --gold:#2e2e2e;     /* primary buttons in flow = black */
+  --gold2:#1f1f1f;    /* hover */
 
   --shadow: 0 16px 50px rgba(0,0,0,.10);
 
@@ -39,6 +42,7 @@
   letter-spacing: -0.3px;
   margin: 0 0 10px;
   font-size: clamp(28px, 3.2vw, 42px);
+  color: var(--ink);
 }
 
 .appHero__italic{
@@ -77,7 +81,7 @@
   top: 50%;
   height: 2px;
   transform: translateY(-50%);
-  background: rgba(0,0,0,0.08);
+  background: rgba(46,46,46,0.08);
   border-radius: 999px;
 }
 
@@ -85,23 +89,23 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(0,0,0,0.22);
+  background: rgba(46,46,46,0.22);
   position: relative;
   z-index: 2;
 }
 
 .progress__dot.is-active{
   background: var(--gold);
-  box-shadow: 0 0 0 4px rgba(138,92,16,0.10);
+  box-shadow: 0 0 0 4px rgba(46,46,46,0.10);
 }
 
 .progress__dot.is-done{
-  background: rgba(138,92,16,0.55);
+  background: rgba(46,46,46,0.55);
 }
 
 .progress__label{
   font-size: 12px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
 }
 
 /* steps */
@@ -135,6 +139,7 @@
   font-weight: 500;
   margin: 0 0 8px;
   font-size: 18px;
+  color: var(--ink);
 }
 
 .card__text{
@@ -163,14 +168,14 @@
 
 .previewTop__title{
   font-size: 12px;
-  color: rgba(0,0,0,0.65);
+  color: rgba(46,46,46,0.65);
 }
 
 /* BIG PREVIEW BOX */
 .previewBox{
   background: #fff;
   border-radius: var(--r12);
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(46,46,46,0.08);
   height: 380px;
   padding: 16px;
   display:flex;
@@ -200,7 +205,7 @@
 .bagTile{
   width: 100%;
   background: #fff;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   border-radius: 10px;
   padding: 8px;
   cursor:pointer;
@@ -210,8 +215,8 @@
 .bagTile:hover{ transform: translateY(-1px); }
 
 .bagTile.is-active{
-  border-color: rgba(138,92,16,0.7);
-  box-shadow: 0 0 0 3px rgba(138,92,16,0.12);
+  border-color: rgba(46,46,46,0.75);
+  box-shadow: 0 0 0 3px rgba(46,46,46,0.10);
 }
 
 .bagTile img{
@@ -223,7 +228,7 @@
 
 .monoLine{
   font-size: 12px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
   margin: 8px 0 16px;
 }
 
@@ -240,7 +245,7 @@
 .fabricTile{
   width: 100%;
   background:#fff;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   border-radius: 12px;
   padding: 8px;
   cursor:pointer;
@@ -254,8 +259,8 @@
 }
 
 .fabricTile.is-active{
-  border-color: rgba(138,92,16,0.75);
-  box-shadow: 0 0 0 3px rgba(138,92,16,0.12);
+  border-color: rgba(46,46,46,0.75);
+  box-shadow: 0 0 0 3px rgba(46,46,46,0.10);
 }
 
 .fabricTile img{
@@ -263,7 +268,7 @@
   height: 70px;
   object-fit: cover;
   border-radius: 10px;
-  border: 1px solid rgba(0,0,0,0.06);
+  border: 1px solid rgba(46,46,46,0.06);
   display:block;
 }
 
@@ -271,7 +276,7 @@
   display:block;
   margin-top: 6px;
   font-size: 11px;
-  color: rgba(0,0,0,0.60);
+  color: rgba(46,46,46,0.60);
   line-height: 1.2;
 }
 
@@ -279,7 +284,7 @@
 .drop{
   width: 100%;
   background: #fff;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   border-radius: var(--r12);
   padding: 22px;
   min-height: 92px;
@@ -298,7 +303,7 @@
 
 .drop span{
   font-size: 12px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
 }
 
 /* mini previews */
@@ -311,13 +316,13 @@
 
 .mini__label{
   font-size: 11px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
   margin-bottom: 6px;
 }
 
 .mini__box{
   background:#fff;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   border-radius: var(--r12);
   height: 140px;
   display:flex;
@@ -336,7 +341,7 @@
 
 .mini__empty{
   font-size: 12px;
-  color: rgba(0,0,0,0.45);
+  color: rgba(46,46,46,0.45);
 }
 
 /* Result panels */
@@ -349,12 +354,12 @@
 
 .resultTop__label{
   font-size: 12px;
-  color: rgba(0,0,0,0.60);
+  color: rgba(46,46,46,0.60);
 }
 
 .iconBtn{
   background: var(--gold);
-  border: 1px solid rgba(0,0,0,0.12);
+  border: 1px solid rgba(46,46,46,0.12);
   color: #fff;
   height: 24px;
   min-width: 32px;
@@ -368,7 +373,7 @@
 
 .resultBox{
   background:#fff;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   border-radius: var(--r16);
   height: 420px;
   padding: 16px;
@@ -403,13 +408,13 @@
   padding: 12px 18px;
   font-size: 12px;
   font-weight: 600;
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid rgba(46,46,46,0.15);
 }
 
 .btn--ghost{
   background: transparent;
-  color: rgba(0,0,0,0.70);
-  border-color: rgba(0,0,0,0.18);
+  color: rgba(46,46,46,0.70);
+  border-color: rgba(46,46,46,0.18);
 }
 .btn--ghost:hover{
   background: rgba(255,255,255,0.35);
@@ -418,7 +423,7 @@
 .btn--primary{
   background: var(--gold);
   color: #fff;
-  border-color: rgba(0,0,0,0.12);
+  border-color: rgba(46,46,46,0.12);
 }
 .btn--primary:hover{ background: var(--gold2); }
 
@@ -431,7 +436,7 @@
 .status{
   margin-top: 10px;
   font-size: 12px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
   min-height: 18px;
 }
 
@@ -439,11 +444,11 @@
 .hint{
   margin-top: 10px;
   font-size: 12px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
 }
 .hintLink{
   margin-left: 8px;
-  color: var(--gold);
+  color: var(--ink);
   text-decoration: underline;
 }
 
@@ -451,7 +456,7 @@
 .saved{
   margin-top: 34px;
   padding-top: 18px;
-  border-top: 1px solid rgba(0,0,0,0.08);
+  border-top: 1px solid rgba(46,46,46,0.08);
 }
 
 .savedTop{
@@ -467,11 +472,12 @@
   font-weight: 500;
   margin: 0 0 6px;
   font-size: 18px;
+  color: var(--ink);
 }
 
 .savedSub{
   margin: 0;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
   font-size: 12px;
 }
 
@@ -485,12 +491,12 @@
   display:none;
   margin-top: 10px;
   font-size: 12px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
 }
 
 .savedCard{
   background: #fff;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   border-radius: 14px;
   padding: 10px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.07);
@@ -498,7 +504,7 @@
 
 .savedImgWrap{
   border-radius: 12px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(46,46,46,0.08);
   height: 190px;
   padding: 10px;
   display:flex;
@@ -525,13 +531,13 @@
 .savedName{
   font-size: 12px;
   font-weight: 600;
-  color: rgba(0,0,0,0.80);
+  color: rgba(46,46,46,0.80);
   line-height: 1.25;
 }
 
 .savedDate{
   font-size: 11px;
-  color: rgba(0,0,0,0.55);
+  color: rgba(46,46,46,0.55);
 }
 
 .savedBtns{

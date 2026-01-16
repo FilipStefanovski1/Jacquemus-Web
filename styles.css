@@ -1,18 +1,21 @@
 /* ==========================
+   styles.css (UPDATED COLORS)
    Rebirth Creative Studio AI
    UI (matches screenshot style)
    ========================== */
 
 :root {
-  --bg: #f6f0df;
-  --paper: #f7f1e3;
-  --paper-2: #f3ecd8;
-  --ink: #151515;
-  --muted: #6f6a5f;
-  --line: rgba(0, 0, 0, 0.08);
+  /* Moodboard palette */
+  --bg: #f3ecd8;          /* main background */
+  --paper: #f7f1e3;       /* soft surface */
+  --paper-2: #f3ecd8;     /* secondary surface (same as bg per your note) */
+  --ink: #2e2e2e;         /* main text (black-ish from moodboard) */
+  --muted: rgba(46,46,46,0.62);
+  --line: rgba(46, 46, 46, 0.08);
 
-  --btn: #1c1c1c;
-  --btnHover: #0f0f0f;
+  /* buttons */
+  --btn: #2e2e2e;
+  --btnHover: #1f1f1f;
 
   --radius: 18px;
   --radius-lg: 26px;
@@ -83,7 +86,7 @@ a:hover { opacity: .92; }
   justify-content: center;
   padding: 13px 20px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.18);
+  border: 1px solid rgba(46,46,46,0.18);
   font-weight: 600;
   letter-spacing: 0.3px;
   font-size: 12px;
@@ -95,8 +98,8 @@ a:hover { opacity: .92; }
 
 .btn--primary{
   background: var(--btn);
-  color: #fff;
-  border-color: rgba(0,0,0,0.2);
+  color: #fff; /* white text on black elements */
+  border-color: rgba(46,46,46,0.20);
 }
 .btn--primary:hover{ background: var(--btnHover); }
 
@@ -107,9 +110,9 @@ a:hover { opacity: .92; }
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(246, 240, 223, 0.72);
+  background: rgba(243, 236, 216, 0.72);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  border-bottom: 1px solid rgba(46,46,46,0.06);
 }
 
 .topbar__inner{
@@ -146,7 +149,7 @@ a:hover { opacity: .92; }
   align-items: center;
   gap: 18px;
   font-size: 13px;
-  color: rgba(0,0,0,0.78);
+  color: rgba(46,46,46,0.78);
 }
 
 .nav a{
@@ -207,7 +210,7 @@ a:hover { opacity: .92; }
 .heroCard{
   position: absolute;
   background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(46,46,46,0.08);
   border-radius: 22px;
   box-shadow: var(--shadow-md);
   overflow: hidden;
@@ -285,7 +288,7 @@ a:hover { opacity: .92; }
   top: 50%;
   height: 2px;
   transform: translateY(-50%);
-  background: rgba(0,0,0,0.10);
+  background: rgba(46,46,46,0.10);
   border-radius: 99px;
 }
 
@@ -296,7 +299,7 @@ a:hover { opacity: .92; }
   width: 7px;
   height: 7px;
   border-radius: 99px;
-  background: rgba(0,0,0,0.35);
+  background: rgba(46,46,46,0.35);
 }
 
 .howDot--left{ left: 0; }
@@ -323,7 +326,7 @@ a:hover { opacity: .92; }
   place-items: center;
   margin: 0 auto 10px;
   color: #1a1a1a;
-  border: 1px solid rgba(0,0,0,0.10);
+  border: 1px solid rgba(46,46,46,0.10);
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
 
@@ -368,7 +371,7 @@ a:hover { opacity: .92; }
   width: 100%;
   display: block;
   border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(46,46,46,0.08);
   background: rgba(255,255,255,0.35);
   box-shadow: var(--shadow-sm);
 }
@@ -382,7 +385,7 @@ a:hover { opacity: .92; }
 
 .ctaBox{
   background: rgba(255,255,255,0.35);
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(46,46,46,0.08);
   border-radius: 22px;
   padding: 26px;
   display: grid;
@@ -400,7 +403,7 @@ a:hover { opacity: .92; }
 }
 
 .ctaAccent{
-  color: #a06b1c;
+  color: rgba(46,46,46,0.78);
   font-style: italic;
 }
 
@@ -410,7 +413,7 @@ a:hover { opacity: .92; }
 
 .ctaNote{
   margin: 10px 0 0;
-  color: rgba(0,0,0,0.45);
+  color: rgba(46,46,46,0.45);
   font-size: 12px;
 }
 
@@ -423,7 +426,7 @@ a:hover { opacity: .92; }
   width: 100%;
   max-width: 360px;
   border-radius: 18px;
-  border: 1px solid rgba(0,0,0,0.08);
+  border: 1px solid rgba(46,46,46,0.08);
   box-shadow: var(--shadow-md);
   display: block;
 }
@@ -433,8 +436,8 @@ a:hover { opacity: .92; }
    ========================== */
 .footer{
   padding: 30px 0 34px;
-  border-top: 1px solid rgba(0,0,0,0.06);
-  background: rgba(246, 240, 223, 0.55);
+  border-top: 1px solid rgba(46,46,46,0.06);
+  background: rgba(243, 236, 216, 0.55);
 }
 
 .footer__inner{
@@ -464,7 +467,7 @@ a:hover { opacity: .92; }
 }
 
 .footerTag{
-  color: rgba(0,0,0,0.52);
+  color: rgba(46,46,46,0.52);
   font-size: 12px;
 }
 
@@ -473,7 +476,7 @@ a:hover { opacity: .92; }
   gap: 14px;
   flex-wrap: wrap;
   justify-content: center;
-  color: rgba(0,0,0,0.72);
+  color: rgba(46,46,46,0.72);
   font-size: 12px;
 }
 
@@ -487,7 +490,7 @@ a:hover { opacity: .92; }
 
 .footerCopy{
   margin-top: 4px;
-  color: rgba(0,0,0,0.45);
+  color: rgba(46,46,46,0.45);
   font-size: 11px;
 }
 
@@ -548,7 +551,7 @@ a:hover { opacity: .92; }
   height: 38px;
   padding: 0 12px;
   border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.15);
+  border: 1px solid rgba(46,46,46,0.15);
   background: #fff;
   cursor: pointer;
   font-size: 18px;
@@ -574,7 +577,7 @@ a:hover { opacity: .92; }
     align-items: flex-start;
     gap: 10px;
     background: #fff;
-    border: 1px solid rgba(0,0,0,0.12);
+    border: 1px solid rgba(46,46,46,0.12);
     border-radius: 14px;
     padding: 12px;
     min-width: 170px;
@@ -590,11 +593,10 @@ a:hover { opacity: .92; }
     width: 100%;
   }
 }
+
 /* =========================
    ABOUT – ensure bags are in FRONT of people
    ========================= */
-
-/* Person / profile cards */
 .aboutCard,
 .profileCard,
 .aboutPerson,
@@ -603,12 +605,11 @@ a:hover { opacity: .92; }
   z-index: 1;
 }
 
-/* Floating bag elements */
 .aboutBag,
 .floatingBag,
 .aboutDecor,
 .aboutCard__bag {
   position: absolute;
   z-index: 3;
-  pointer-events: none; /* optional: prevents accidental clicks */
+  pointer-events: none;
 }

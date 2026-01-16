@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
     // Use a TEXT model here on purpose (this is just a sanity test).
     // Set GEMINI_TEXT_MODEL in Vercel if you want. Otherwise fallback:
-    const model = process.env.GEMINI_TEXT_MODEL || "gemini-1.5-flash";
+    const model = process.env.GEMINI_TEXT_MODEL || "gemini-3-flash-preview";
 
     if (!apiKey) {
       return res.status(500).json({ error: "Missing GEMINI_API_KEY" });

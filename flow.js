@@ -477,7 +477,15 @@ if (generateBagBtn) {
       const fabricDataUrl = await blobToDataUrl(fabricBlob);
 
       const payload = {
-        prompt: "wrap the bag of image 1 in the texture of image 2",
+        prompt: `
+Apply the texture from image 2 onto the bag in image 1.
+
+Rules:
+- Keep the exact original bag shape, silhouette, proportions, stitching, and edges from image 1 (do not change geometry).
+- Only change the material/texture; keep lighting realistic.
+- Keep the logo visible, readable, and in the same position as image 1 (do not cover, blur, remove, or distort it).
+- Preserve straps, hardware, shadows, and perspective from image 1.
+`.trim(),
         bag: dataUrlToBase64Parts(bagDataUrl),
         fabric: dataUrlToBase64Parts(fabricDataUrl),
       };

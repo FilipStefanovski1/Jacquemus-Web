@@ -27,15 +27,21 @@
         </a>
 
         <nav class="nav" id="siteNav">
-  <button class="navToggle" type="button" id="navToggle" aria-label="Open menu" aria-expanded="false">
-    ☰
-  </button>
+          <button
+            class="navToggle"
+            type="button"
+            id="navToggle"
+            aria-label="Open menu"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
 
-  <div class="navLinks" id="navLinks">
-    <a href="about.html">About us</a>
-    <a href="contact.html">Contact us</a>
-  </div>
-</nav>
+          <div class="navLinks" id="navLinks">
+            <a href="about.html">About us</a>
+            <a href="contact.html">Contact us</a>
+          </div>
+        </nav>
       </div>
     </header>
 
@@ -44,7 +50,7 @@
         <section class="appHero">
           <h1 class="appHero__title">Create <span class="appHero__italic">Your</span> Handbag</h1>
           <p class="appHero__sub">
-            Choose a Jacquemus model, upload your fabric texture, generate the new material, then try it on with a full-body image.
+            Choose a Jacquemus model, pick a fabric texture (preset or upload), generate the new material, then try it on with a full-body image.
           </p>
 
           <div class="progress">
@@ -69,39 +75,19 @@
               <p class="card__text">Pick the base bag model. We keep the shape consistent and only change the material.</p>
 
               <div class="bagGrid bagGrid--4" id="formThumbs">
-                <button
-                  class="bagTile is-active"
-                  type="button"
-                  data-bag="/assets/black-large-bambino.png"
-                  data-name="The Large Bambino (Black)"
-                >
+                <button class="bagTile is-active" type="button" data-bag="/assets/black-large-bambino.png" data-name="The Large Bambino (Black)">
                   <img src="/assets/black-large-bambino.png" alt="The Large Bambino (Black)" />
                 </button>
 
-                <button
-                  class="bagTile"
-                  type="button"
-                  data-bag="/assets/black-the-bambino.png"
-                  data-name="The Bambino (Black)"
-                >
+                <button class="bagTile" type="button" data-bag="/assets/black-the-bambino.png" data-name="The Bambino (Black)">
                   <img src="/assets/black-the-bambino.png" alt="The Bambino (Black)" />
                 </button>
 
-                <button
-                  class="bagTile"
-                  type="button"
-                  data-bag="/assets/black-the-bisou-perle.png"
-                  data-name="The Bisou Perle (Black)"
-                >
+                <button class="bagTile" type="button" data-bag="/assets/black-the-bisou-perle.png" data-name="The Bisou Perle (Black)">
                   <img src="/assets/black-the-bisou-perle.png" alt="The Bisou Perle (Black)" />
                 </button>
 
-                <button
-                  class="bagTile"
-                  type="button"
-                  data-bag="/assets/the-large-chiquito.png"
-                  data-name="The Large Chiquito"
-                >
+                <button class="bagTile" type="button" data-bag="/assets/the-large-chiquito.png" data-name="The Large Chiquito">
                   <img src="/assets/the-large-chiquito.png" alt="The Large Chiquito" />
                 </button>
               </div>
@@ -134,10 +120,15 @@
         <section class="step" data-step="2">
           <div class="cardGrid">
             <div class="card">
-              <h2 class="card__title">Upload your fabric texture</h2>
+              <h2 class="card__title">Choose a fabric texture</h2>
               <p class="card__text">
-                Upload a fabric image. Prompt used: “wrap the bag of image 1 in the texture of image 2”.
+                Pick one of the curated textures or upload your own. Both do the same thing: they become the fabric used to wrap the bag.
               </p>
+
+              <!-- Presets -->
+              <div class="fabricGrid" id="fabricPresets" aria-label="Fabric presets"></div>
+
+              <div class="monoLine" style="margin-top:6px;">Or upload your own fabric</div>
 
               <button class="drop" type="button" id="fabricBtn">
                 <span class="drop__icon">▢</span>

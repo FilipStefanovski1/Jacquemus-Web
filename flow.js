@@ -27,6 +27,15 @@ const BAG_OPTIONS = [
   { src: "/assets/the-large-chiquito.png", name: "The Large Chiquito" },
 ];
 
+// IMPORTANT: Add these files in /assets/fabrics/
+const FABRIC_PRESETS = [
+  { name: "Deer", src: "/assets/fabrics/texture-01.jpg" },
+  { name: "Tiger", src: "/assets/fabrics/texture-02.jpg" },
+  { name: "Snake", src: "/assets/fabrics/texture-03.jpg" },
+  { name: "Starry", src: "/assets/fabrics/texture-04.jpg" },
+  { name: "Raw Denim", src: "/assets/fabrics/texture-05.jpg" },
+];
+
 const state = {
   bagUrl: BAG_OPTIONS[0].src,
   bagName: BAG_OPTIONS[0].name,
@@ -66,6 +75,36 @@ function showStep(n) {
   setProgressUI();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+/* =========================
+   MOBILE NAV TOGGLE (fix)
+   ========================= */
+(function wireMobileNav() {
+  const navToggle = document.getElementById("navToggle");
+  const navLinks = document.getElementById("navLinks");
+  const navWrap = document.getElementById("siteNav");
+
+  if (!navToggle || !navLinks) return;
+
+  function closeMenu() {
+    navLinks.classList.remove("is-open");
+    navToggle.setAttribute("aria-expanded", "false");
+  }
+
+  navToggle.addEventListener("click", () => {
+    const isOpen = navLinks.classList.toggle("is-open");
+    navToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!navWrap) return;
+    if (!e.target.closest("#siteNav")) closeMenu();
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth > 720) closeMenu();
+  });
+})();
 
 /* =========================
    API HELPERS
@@ -115,7 +154,7 @@ function formatApiError(data, status, endpointPath) {
 }
 
 /* =========================
-   NAV BUTTONS
+   NAV BUTTONS (steps)
    ========================= */
 document.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-action]");
@@ -140,6 +179,9 @@ document.addEventListener("click", (e) => {
     const fabricMiniEmpty = document.getElementById("fabricMiniEmpty");
     if (fabricMini) fabricMini.style.display = "none";
     if (fabricMiniEmpty) fabricMiniEmpty.style.display = "block";
+
+    // clear preset selection UI
+    document.querySelectorAll(".fabricTile").forEach((x) => x.classList.remove("is-active"));
 
     const genImg = document.getElementById("generatedBagImg");
     if (genImg) genImg.src = state.bagUrl;
@@ -310,8 +352,14 @@ async function blobToDataUrl(blob) {
   });
 }
 
+async function fileToBlobFromUrl(url) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("Failed to load local image: " + url);
+  return await res.blob();
+}
+
 /* =========================
-   STEP 2: FABRIC UPLOAD + GENERATE
+   STEP 2: FABRIC PRESETS + UPLOAD + GENERATE
    ========================= */
 const fabricInput = document.getElementById("fabricInput");
 const fabricBtn = document.getElementById("fabricBtn");
@@ -319,6 +367,7 @@ const fabricLabel = document.getElementById("fabricLabel");
 const fabricMini = document.getElementById("fabricMini");
 const fabricMiniEmpty = document.getElementById("fabricMiniEmpty");
 const generateBagBtn = document.getElementById("generateBagBtn");
+const fabricPresetsWrap = document.getElementById("fabricPresets");
 
 async function setFabricFile(file) {
   setStatus("status2", `Compressing fabric... (${bytesToNice(file.size)})`);
@@ -346,27 +395,71 @@ async function setFabricFile(file) {
   setStatus("status2", "Ready.");
 }
 
+// Build presets UI
+function renderFabricPresets() {
+  if (!fabricPresetsWrap) return;
+
+  fabricPresetsWrap.innerHTML = FABRIC_PRESETS.map((f) => {
+    return `
+      <button class="fabricTile" type="button" data-src="${f.src}" data-name="${escapeHtml(f.name)}">
+        <img src="${f.src}" alt="${escapeHtml(f.name)}" />
+        <span>${escapeHtml(f.name)}</span>
+      </button>
+    `;
+  }).join("");
+
+  fabricPresetsWrap.addEventListener("click", async (e) => {
+    const tile = e.target.closest(".fabricTile");
+    if (!tile) return;
+
+    // UI active state
+    fabricPresetsWrap.querySelectorAll(".fabricTile").forEach((x) => x.classList.remove("is-active"));
+    tile.classList.add("is-active");
+
+    const src = tile.dataset.src;
+    const name = tile.dataset.name || "preset.jpg";
+
+    setStatus("status2", "Loading preset texture...");
+
+    try {
+      const blob = await fileToBlobFromUrl(src);
+      const file = new File([blob], `${name.toLowerCase().replace(/\s+/g, "-")}.jpg`, { type: blob.type || "image/jpeg" });
+
+      // if user later uploads the same file, allow change event to fire
+      if (fabricInput) fabricInput.value = "";
+
+      await setFabricFile(file);
+    } catch (err) {
+      setStatus("status2", "Error loading preset: " + err.message);
+    }
+  });
+}
+
+renderFabricPresets();
+
+// Upload button + drag drop
 if (fabricBtn && fabricInput) {
   fabricBtn.addEventListener("click", () => fabricInput.click());
 
   fabricInput.addEventListener("change", () => {
     const file = fabricInput.files?.[0];
     if (!file) return;
+
+    // If user uploads manually, clear preset active state
+    document.querySelectorAll(".fabricTile").forEach((x) => x.classList.remove("is-active"));
+
     setFabricFile(file);
   });
 
-  wireDropZone(fabricBtn, (file) => setFabricFile(file));
-}
-
-async function fileToBlobFromUrl(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to load local bag image: " + url);
-  return await res.blob();
+  wireDropZone(fabricBtn, (file) => {
+    document.querySelectorAll(".fabricTile").forEach((x) => x.classList.remove("is-active"));
+    setFabricFile(file);
+  });
 }
 
 if (generateBagBtn) {
   generateBagBtn.addEventListener("click", async () => {
-    if (!state.fabricFile) return setStatus("status2", "Upload a fabric image first.");
+    if (!state.fabricFile) return setStatus("status2", "Pick a preset texture or upload a fabric image first.");
     if (state.fabricFile.size > HARD_STOP_BYTES) {
       return setStatus(
         "status2",
@@ -412,6 +505,14 @@ if (generateBagBtn) {
       const genImg = document.getElementById("generatedBagImg");
       if (genImg) genImg.src = state.generatedBagDataUrl;
 
+      // reset try-on if new bag created
+      state.tryOnDataUrl = null;
+      const tryImg = document.getElementById("tryOnImg");
+      if (tryImg) {
+        tryImg.removeAttribute("src");
+        tryImg.style.display = "none";
+      }
+
       setStatus("status2", "Done.");
       setStatus("status3", "");
       showStep(3);
@@ -422,11 +523,12 @@ if (generateBagBtn) {
 }
 
 /* =========================
-   STEP 3
+   STEP 3: ACTIONS
    ========================= */
 const downloadBagBtn = document.getElementById("downloadBagBtn");
 const toTryOnBtn = document.getElementById("toTryOnBtn");
 const shareBagBtn = document.getElementById("shareBagBtn");
+const saveBagBtn = document.getElementById("saveBagBtn");
 
 if (downloadBagBtn) {
   downloadBagBtn.addEventListener("click", () => {
@@ -458,6 +560,14 @@ if (shareBagBtn) {
   });
 }
 
+if (saveBagBtn) {
+  saveBagBtn.addEventListener("click", () => {
+    if (!state.generatedBagDataUrl) return setStatus("status3", "Generate a bag first.");
+    saveCurrentDesign();
+    setStatus("status3", "Saved.");
+  });
+}
+
 /* =========================
    STEP 4: PERSON UPLOAD + TRY-ON
    ========================= */
@@ -467,6 +577,7 @@ const personLabel = document.getElementById("personLabel");
 const generateTryOnBtn = document.getElementById("generateTryOnBtn");
 const downloadTryOnBtn = document.getElementById("downloadTryOnBtn");
 const shareTryOnBtn = document.getElementById("shareTryOnBtn");
+const saveTryOnBtn = document.getElementById("saveTryOnBtn");
 
 async function setPersonFile(file) {
   setStatus("status4", `Compressing photo... (${bytesToNice(file.size)})`);
@@ -514,24 +625,24 @@ if (generateTryOnBtn) {
     setStatus("status4", "Generating try-on...");
 
     try {
-      const personBlob = state.personFile; // File/Blob
-const bagBlob = dataUrlToBlob(state.generatedBagDataUrl); // Blob
+      const personBlob = state.personFile;
+      const bagBlob = dataUrlToBlob(state.generatedBagDataUrl);
 
-const personDataUrl = await blobToDataUrl(personBlob);
-const bagDataUrl = await blobToDataUrl(bagBlob);
+      const personDataUrl = await blobToDataUrl(personBlob);
+      const bagDataUrl = await blobToDataUrl(bagBlob);
 
-const payload = {
-  prompt: "make the woman hold the bag",
-  person: dataUrlToBase64Parts(personDataUrl),
-  bag: dataUrlToBase64Parts(bagDataUrl),
-};
+      const payload = {
+        prompt: "make the woman hold the bag",
+        person: dataUrlToBase64Parts(personDataUrl),
+        bag: dataUrlToBase64Parts(bagDataUrl),
+      };
 
-const url = apiUrl(ENDPOINTS.tryOn);
-const res = await fetch(url, {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload),
-});
+      const url = apiUrl(ENDPOINTS.tryOn);
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       let data;
       try {
@@ -585,6 +696,14 @@ if (shareTryOnBtn) {
   });
 }
 
+if (saveTryOnBtn) {
+  saveTryOnBtn.addEventListener("click", () => {
+    if (!state.tryOnDataUrl) return setStatus("status4", "Generate the try-on first.");
+    saveCurrentDesign(); // will include tryOn if available
+    setStatus("status4", "Saved.");
+  });
+}
+
 /* =========================
    HELPERS
    ========================= */
@@ -607,7 +726,7 @@ function downloadAny(src, filename) {
 }
 
 /* =========================
-   SAVED DESIGNS (localStorage)
+   SAVED DESIGNS (localStorage) - FIXED IDS
    ========================= */
 const SAVED_KEY = "rebirth_saved_designs_v1";
 
@@ -640,7 +759,7 @@ function saveCurrentDesign() {
   };
 
   const saved = getSaved();
-  saved.unshift(item); // newest first
+  saved.unshift(item);
   setSaved(saved);
 
   renderSavedDesigns();
@@ -658,8 +777,8 @@ function clearAllSaved() {
 }
 
 function renderSavedDesigns() {
-  const wrap = document.getElementById("savedDesignsWrap");
-  const empty = document.getElementById("savedDesignsEmpty");
+  const wrap = document.getElementById("savedGrid");
+  const empty = document.getElementById("savedEmpty");
   const clearBtn = document.getElementById("clearSavedBtn");
 
   if (!wrap) return;
@@ -678,21 +797,19 @@ function renderSavedDesigns() {
     const imgSrc = item.tryOnImage || item.bagImage;
 
     card.innerHTML = `
-      <div class="savedCard__top">
-        <div class="savedCard__meta">
-          <div class="savedCard__title">${escapeHtml(item.bagName)}</div>
-          <div class="savedCard__date">${new Date(item.createdAt).toLocaleString()}</div>
-        </div>
-        <button class="savedCard__delete" data-del="${item.id}">Delete</button>
+      <div class="savedImgWrap">
+        <img class="savedImg" src="${imgSrc}" alt="Saved design" />
       </div>
 
-      <div class="savedCard__imgWrap">
-        <img class="savedCard__img" src="${imgSrc}" alt="Saved design" />
+      <div class="savedMeta">
+        <div class="savedName">${escapeHtml(item.bagName)}</div>
+        <div class="savedDate">${new Date(item.createdAt).toLocaleString()}</div>
       </div>
 
-      <div class="savedCard__actions">
-        <button data-dl="${item.id}">Download</button>
-        <button data-share="${item.id}">Share</button>
+      <div class="savedBtns">
+        <button class="btn btn--ghost btnSmall" type="button" data-dl="${item.id}">Download</button>
+        <button class="btn btn--ghost btnSmall" type="button" data-share="${item.id}">Share</button>
+        <button class="btn btn--primary btnSmall" type="button" data-del="${item.id}">Delete</button>
       </div>
     `;
 
@@ -709,7 +826,7 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-// Wire buttons
+// Saved gallery actions
 document.addEventListener("click", async (e) => {
   const del = e.target.closest("[data-del]")?.dataset?.del;
   const dl = e.target.closest("[data-dl]")?.dataset?.dl;
@@ -745,13 +862,12 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-// Clear all button (if present)
+// Clear all button
 const clearSavedBtn = document.getElementById("clearSavedBtn");
 if (clearSavedBtn) clearSavedBtn.addEventListener("click", clearAllSaved);
 
 // Render on load
 renderSavedDesigns();
-
 
 // Start
 showStep(1);

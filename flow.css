@@ -2,6 +2,7 @@
    FLOW (Atelier-style UI)
    4-step version (no palette step)
    + Saved Designs gallery
+   + Fabric presets in Step 2
    ========================================= */
 
 :root{
@@ -165,13 +166,13 @@
   color: rgba(0,0,0,0.65);
 }
 
-/* BIG PREVIEW BOX (bigger + centered + no crop) */
+/* BIG PREVIEW BOX */
 .previewBox{
   background: #fff;
   border-radius: var(--r12);
   border: 1px solid rgba(0,0,0,0.08);
-  height: 380px;                /* bigger than before */
-  padding: 16px;                /* gives breathing room */
+  height: 380px;
+  padding: 16px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -181,7 +182,7 @@
 .previewImg{
   width: 100%;
   height: 100%;
-  object-fit: contain;           /* prevents cut-off */
+  object-fit: contain;
   object-position: center;
 }
 
@@ -215,7 +216,7 @@
 
 .bagTile img{
   width: 100%;
-  height: 86px;                 /* a bit bigger thumbnails */
+  height: 86px;
   object-fit: contain;
   display:block;
 }
@@ -224,6 +225,54 @@
   font-size: 12px;
   color: rgba(0,0,0,0.55);
   margin: 8px 0 16px;
+}
+
+/* =========================
+   FABRIC PRESETS (Step 2)
+   ========================= */
+.fabricGrid{
+  display:grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin: 10px 0 12px;
+}
+
+.fabricTile{
+  width: 100%;
+  background:#fff;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 12px;
+  padding: 8px;
+  cursor:pointer;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  text-align: left;
+}
+
+.fabricTile:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.07);
+}
+
+.fabricTile.is-active{
+  border-color: rgba(138,92,16,0.75);
+  box-shadow: 0 0 0 3px rgba(138,92,16,0.12);
+}
+
+.fabricTile img{
+  width: 100%;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.06);
+  display:block;
+}
+
+.fabricTile span{
+  display:block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: rgba(0,0,0,0.60);
+  line-height: 1.2;
 }
 
 /* Drag-drop buttons */
@@ -266,12 +315,11 @@
   margin-bottom: 6px;
 }
 
-/* MINI BOXES (bigger + no crop) */
 .mini__box{
   background:#fff;
   border: 1px solid rgba(0,0,0,0.10);
   border-radius: var(--r12);
-  height: 140px;                 /* bigger than before */
+  height: 140px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -282,7 +330,7 @@
 .mini__box img{
   width: 100%;
   height: 100%;
-  object-fit: contain;            /* prevents cut-off */
+  object-fit: contain;
   object-position: center;
 }
 
@@ -318,12 +366,11 @@
 }
 .iconBtn:hover{ background: var(--gold2); }
 
-/* RESULT BOX (bigger + no crop) */
 .resultBox{
   background:#fff;
   border: 1px solid rgba(0,0,0,0.10);
   border-radius: var(--r16);
-  height: 420px;                 /* bigger than before */
+  height: 420px;
   padding: 16px;
   display:flex;
   align-items:center;
@@ -335,7 +382,7 @@
 .resultImg{
   width: 100%;
   height: 100%;
-  object-fit: contain;            /* prevents cut-off */
+  object-fit: contain;
   object-position: center;
 }
 
@@ -452,7 +499,7 @@
 .savedImgWrap{
   border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.08);
-  height: 190px;                /* slightly bigger */
+  height: 190px;
   padding: 10px;
   display:flex;
   align-items:center;
@@ -513,6 +560,7 @@
   .mini__box{ height: 130px; }
 
   .savedGrid{ grid-template-columns: repeat(2, 1fr); }
+  .fabricGrid{ grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 520px){
@@ -526,34 +574,27 @@
   .mini__box{ height: 120px; }
 
   .savedGrid{ grid-template-columns: 1fr; }
+  .fabricGrid{ grid-template-columns: repeat(2, 1fr); }
 }
 
-/* =========================================
-   SUBTLE ZOOM (no cut-off)
-   ========================================= */
-
-/* Main previews */
+/* Subtle zoom */
 .previewImg,
 .resultImg {
-  transform: scale(1.12);       /* gentle zoom */
+  transform: scale(1.12);
   transform-origin: center;
 }
 
-/* Mini previews (bag + fabric) */
 .mini__box img {
   transform: scale(1.15);
   transform-origin: center;
 }
 
-/* Bag selection thumbnails */
 .bagTile img {
   transform: scale(1.18);
   transform-origin: center;
 }
 
-/* Saved gallery */
 .savedImg {
   transform: scale(1.12);
   transform-origin: center;
 }
-

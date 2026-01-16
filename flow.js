@@ -21,17 +21,17 @@ let current = 1;
    STATE
    ========================= */
 const BAG_OPTIONS = [
-  { src: "assets/Black Large Bambino.png", name: "The Large Bambino (Black)" },
-  { src: "assets/Black The Bambino.png", name: "The Bambino (Black)" },
-  { src: "assets/Black The Bisou Perle.png", name: "The Bisou Perle (Black)" },
-  { src: "assets/The Large Chiquito.png", name: "The Large Chiquito" },
+  { src: "/assets/black-large-bambino.png", name: "The Large Bambino (Black)" },
+  { src: "/assets/black-the-bambino.png", name: "The Bambino (Black)" },
+  { src: "/assets/black-the-bisou-perle.png", name: "The Bisou Perle (Black)" },
+  { src: "/assets/the-large-chiquito.png", name: "The Large Chiquito" },
 ];
 
 const state = {
   bagUrl: BAG_OPTIONS[0].src,
   bagName: BAG_OPTIONS[0].name,
-  fabricFile: null,
-  personFile: null,
+  fabricFile: null, // will store the COMPRESSED file
+  personFile: null, // will store the COMPRESSED file
   generatedBagDataUrl: null,
   tryOnDataUrl: null,
 };
@@ -80,12 +80,9 @@ async function safeJson(res) {
 
   try {
     return JSON.parse(text);
-  } catch {
-    const isHtml = text.trim().startsWith("<!DOCTYPE") || text.trim().startsWith("<html");
-    if (isHtml) {
-      throw new Error(`API returned HTML (not JSON). Status: ${res.status}`);
-    }
-    throw new Error(`API returned non-JSON. Status: ${res.status}`);
+  } catch (e) {
+    const head = text.slice(0, 400);
+    throw new Error(`API returned non-JSON. Status: ${res.status}\n\nFirst bytes:\n${head}`);
   }
 }
 
@@ -93,21 +90,23 @@ function explainLikelyCause(status, endpointPath) {
   if (status === 404) {
     return (
       `\n\nLikely cause: API route "${endpointPath}" is not available on this server.\n` +
-      `Fix: Deploy the /api function or set API_BASE to the backend URL.`
+      `Fix: Run with "npx vercel dev" or deploy the /api functions.`
     );
   }
   if (status === 401 || status === 403) {
     return (
       `\n\nLikely cause: Key/model permissions or API restrictions (Gemini returned ${status}).\n` +
-      `Fix: Check GEMINI_API_KEY + GEMINI_IMAGE_MODEL on Vercel, and key restrictions in Google.`
+      `Fix: Check GEMINI_API_KEY + GEMINI_IMAGE_MODEL in .env.local (and Vercel env).`
     );
+  }
+  if (status === 413) {
+    return `\n\nLikely cause: Upload too large (payload limit).\nFix: Use smaller images or let the app compress them.`;
   }
   return "";
 }
 
 function formatApiError(data, status, endpointPath) {
   const extra = explainLikelyCause(status, endpointPath);
-
   if (!data) return `Request failed (${status})` + extra;
 
   const msg = data?.error || `Request failed (${status})`;
@@ -154,7 +153,6 @@ document.addEventListener("click", (e) => {
     setStatus("status2", "");
     setStatus("status3", "");
     setStatus("status4", "");
-
     showStep(1);
   }
 });
@@ -209,13 +207,12 @@ if (formThumbs) {
 syncBagEverywhere();
 
 /* =========================
-   DRAG & DROP HELPERS
+   DRAG & DROP
    ========================= */
 function wireDropZone(buttonEl, onFile) {
   if (!buttonEl) return;
 
   buttonEl.addEventListener("dragover", (e) => e.preventDefault());
-
   buttonEl.addEventListener("drop", (e) => {
     e.preventDefault();
     const file = e.dataTransfer?.files?.[0];
@@ -225,7 +222,96 @@ function wireDropZone(buttonEl, onFile) {
 }
 
 /* =========================
-   STEP 2: FABRIC UPLOAD + GENERATE BAG
+   COMPRESSION
+   ========================= */
+// Target: keep each upload under ~2.2MB
+const TARGET_BYTES = 2.2 * 1024 * 1024;
+const HARD_STOP_BYTES = 3.2 * 1024 * 1024;
+
+function bytesToNice(n) {
+  const mb = n / (1024 * 1024);
+  if (mb >= 1) return `${mb.toFixed(2)} MB`;
+  return `${(n / 1024).toFixed(0)} KB`;
+}
+
+async function fileToBitmap(file) {
+  if ("createImageBitmap" in window) {
+    try {
+      return await createImageBitmap(file);
+    } catch {}
+  }
+
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    await new Promise((resolve, reject) => {
+      img.onload = resolve;
+      img.onerror = reject;
+    });
+    return img;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function canvasToBlob(canvas, quality) {
+  return await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+}
+
+async function compressToTarget(file, { maxDim = 1200 } = {}) {
+  if (file.size <= TARGET_BYTES) return file;
+
+  const img = await fileToBitmap(file);
+
+  const w = img.width;
+  const h = img.height;
+  const scale = Math.min(1, maxDim / Math.max(w, h));
+  const tw = Math.max(1, Math.round(w * scale));
+  const th = Math.max(1, Math.round(h * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = tw;
+  canvas.height = th;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, tw, th);
+
+  let blob = await canvasToBlob(canvas, 0.82);
+  if (!blob) return file;
+
+  if (blob.size > TARGET_BYTES) blob = await canvasToBlob(canvas, 0.72);
+  if (blob && blob.size > TARGET_BYTES) blob = await canvasToBlob(canvas, 0.62);
+
+  if (blob && blob.size > TARGET_BYTES) {
+    const maxDim2 = Math.max(800, Math.round(maxDim * 0.75));
+    return await compressToTarget(file, { maxDim: maxDim2 });
+  }
+
+  const outName = file.name.replace(/\.\w+$/, ".jpg");
+  return new File([blob], outName, { type: "image/jpeg" });
+}
+
+/* =========================
+   BASE64 HELPERS (JSON ROUTE)
+   ========================= */
+function dataUrlToBase64Parts(dataUrl) {
+  const [meta, b64] = dataUrl.split(",");
+  const mime = meta.match(/data:(.*);base64/)?.[1] || "application/octet-stream";
+  return { mimeType: mime, data: b64 };
+}
+
+async function blobToDataUrl(blob) {
+  return await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result));
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+}
+
+/* =========================
+   STEP 2: FABRIC UPLOAD + GENERATE
    ========================= */
 const fabricInput = document.getElementById("fabricInput");
 const fabricBtn = document.getElementById("fabricBtn");
@@ -234,18 +320,30 @@ const fabricMini = document.getElementById("fabricMini");
 const fabricMiniEmpty = document.getElementById("fabricMiniEmpty");
 const generateBagBtn = document.getElementById("generateBagBtn");
 
-function setFabricFile(file) {
-  state.fabricFile = file;
-  if (fabricLabel) fabricLabel.textContent = file.name;
+async function setFabricFile(file) {
+  setStatus("status2", `Compressing fabric... (${bytesToNice(file.size)})`);
 
-  const url = URL.createObjectURL(file);
+  const compressed = await compressToTarget(file, { maxDim: 1200 });
+  state.fabricFile = compressed;
+
+  if (fabricLabel) fabricLabel.textContent = `${compressed.name} (${bytesToNice(compressed.size)})`;
+
+  const url = URL.createObjectURL(compressed);
   if (fabricMini) {
     fabricMini.src = url;
     fabricMini.style.display = "block";
   }
   if (fabricMiniEmpty) fabricMiniEmpty.style.display = "none";
 
-  setStatus("status2", "");
+  if (compressed.size > HARD_STOP_BYTES) {
+    setStatus(
+      "status2",
+      `Fabric still too big after compression (${bytesToNice(compressed.size)}). Use a smaller image.`
+    );
+    return;
+  }
+
+  setStatus("status2", "Ready.");
 }
 
 if (fabricBtn && fabricInput) {
@@ -261,30 +359,42 @@ if (fabricBtn && fabricInput) {
 }
 
 async function fileToBlobFromUrl(url) {
-  const res = await fetch(encodeURI(url));
+  const res = await fetch(url);
   if (!res.ok) throw new Error("Failed to load local bag image: " + url);
   return await res.blob();
 }
 
 if (generateBagBtn) {
   generateBagBtn.addEventListener("click", async () => {
-    if (!state.fabricFile) {
-      setStatus("status2", "Upload a fabric image first.");
-      return;
+    if (!state.fabricFile) return setStatus("status2", "Upload a fabric image first.");
+    if (state.fabricFile.size > HARD_STOP_BYTES) {
+      return setStatus(
+        "status2",
+        `Fabric too big to upload (${bytesToNice(state.fabricFile.size)}). Pick a smaller image.`
+      );
     }
 
     setStatus("status2", "Generating bag...");
 
     try {
       const bagBlob = await fileToBlobFromUrl(state.bagUrl);
+      const fabricBlob = state.fabricFile;
 
-      const fd = new FormData();
-      fd.append("bag", bagBlob, "bag.png");
-      fd.append("fabric", state.fabricFile, state.fabricFile.name);
-      fd.append("prompt", "wrap the bag of image 1 in the texture of image 2");
+      const bagDataUrl = await blobToDataUrl(bagBlob);
+      const fabricDataUrl = await blobToDataUrl(fabricBlob);
+
+      const payload = {
+        prompt: "wrap the bag of image 1 in the texture of image 2",
+        bag: dataUrlToBase64Parts(bagDataUrl),
+        fabric: dataUrlToBase64Parts(fabricDataUrl),
+      };
 
       const url = apiUrl(ENDPOINTS.generateBag);
-      const res = await fetch(url, { method: "POST", body: fd });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       let data;
       try {
@@ -294,13 +404,8 @@ if (generateBagBtn) {
         throw new Error(parseErr.message + extra);
       }
 
-      if (!res.ok) {
-        throw new Error(formatApiError(data, res.status, ENDPOINTS.generateBag));
-      }
-
-      if (!data?.image) {
-        throw new Error("No image returned by API.");
-      }
+      if (!res.ok) throw new Error(formatApiError(data, res.status, ENDPOINTS.generateBag));
+      if (!data?.image) throw new Error("No image returned by API.");
 
       state.generatedBagDataUrl = data.image;
 
@@ -317,7 +422,7 @@ if (generateBagBtn) {
 }
 
 /* =========================
-   STEP 3: DOWNLOAD / SHARE / GO TRY-ON
+   STEP 3
    ========================= */
 const downloadBagBtn = document.getElementById("downloadBagBtn");
 const toTryOnBtn = document.getElementById("toTryOnBtn");
@@ -337,26 +442,15 @@ if (toTryOnBtn) {
 if (shareBagBtn) {
   shareBagBtn.addEventListener("click", async () => {
     const src = state.generatedBagDataUrl;
-    if (!src) {
-      setStatus("status3", "Generate a bag first.");
-      return;
-    }
+    if (!src) return setStatus("status3", "Generate a bag first.");
 
     try {
-      if (!navigator.share) {
-        setStatus("status3", "Sharing not supported on this device/browser.");
-        return;
-      }
+      if (!navigator.share) return setStatus("status3", "Sharing not supported on this device/browser.");
 
       const blob = dataUrlToBlob(src);
       const file = new File([blob], "rebirth-bag.png", { type: blob.type });
 
-      await navigator.share({
-        title: "Rebirth Bag Design",
-        text: "My Rebirth bag design",
-        files: [file],
-      });
-
+      await navigator.share({ title: "Rebirth Bag Design", text: "My Rebirth bag design", files: [file] });
       setStatus("status3", "Shared.");
     } catch {
       setStatus("status3", "Share cancelled.");
@@ -374,10 +468,23 @@ const generateTryOnBtn = document.getElementById("generateTryOnBtn");
 const downloadTryOnBtn = document.getElementById("downloadTryOnBtn");
 const shareTryOnBtn = document.getElementById("shareTryOnBtn");
 
-function setPersonFile(file) {
-  state.personFile = file;
-  if (personLabel) personLabel.textContent = file.name;
-  setStatus("status4", "");
+async function setPersonFile(file) {
+  setStatus("status4", `Compressing photo... (${bytesToNice(file.size)})`);
+
+  const compressed = await compressToTarget(file, { maxDim: 1400 });
+  state.personFile = compressed;
+
+  if (personLabel) personLabel.textContent = `${compressed.name} (${bytesToNice(compressed.size)})`;
+
+  if (compressed.size > HARD_STOP_BYTES) {
+    setStatus(
+      "status4",
+      `Photo still too big after compression (${bytesToNice(compressed.size)}). Use a smaller image.`
+    );
+    return;
+  }
+
+  setStatus("status4", "Ready.");
 }
 
 if (personBtn && personInput) {
@@ -394,28 +501,37 @@ if (personBtn && personInput) {
 
 if (generateTryOnBtn) {
   generateTryOnBtn.addEventListener("click", async () => {
-    if (!state.generatedBagDataUrl) {
-      setStatus("status4", "Generate the bag first.");
-      return;
-    }
-    if (!state.personFile) {
-      setStatus("status4", "Upload a full-body photo first.");
-      return;
+    if (!state.generatedBagDataUrl) return setStatus("status4", "Generate the bag first.");
+    if (!state.personFile) return setStatus("status4", "Upload a full-body photo first.");
+
+    if (state.personFile.size > HARD_STOP_BYTES) {
+      return setStatus(
+        "status4",
+        `Photo too big to upload (${bytesToNice(state.personFile.size)}). Pick a smaller image.`
+      );
     }
 
     setStatus("status4", "Generating try-on...");
 
     try {
-      const fd = new FormData();
-      fd.append("person", state.personFile, state.personFile.name);
+      const personBlob = state.personFile; // File/Blob
+const bagBlob = dataUrlToBlob(state.generatedBagDataUrl); // Blob
 
-      const bagBlob = dataUrlToBlob(state.generatedBagDataUrl);
-      fd.append("bag", bagBlob, "generated-bag.png");
+const personDataUrl = await blobToDataUrl(personBlob);
+const bagDataUrl = await blobToDataUrl(bagBlob);
 
-      fd.append("prompt", "make the woman hold the bag");
+const payload = {
+  prompt: "make the woman hold the bag",
+  person: dataUrlToBase64Parts(personDataUrl),
+  bag: dataUrlToBase64Parts(bagDataUrl),
+};
 
-      const url = apiUrl(ENDPOINTS.tryOn);
-      const res = await fetch(url, { method: "POST", body: fd });
+const url = apiUrl(ENDPOINTS.tryOn);
+const res = await fetch(url, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
 
       let data;
       try {
@@ -425,13 +541,8 @@ if (generateTryOnBtn) {
         throw new Error(parseErr.message + extra);
       }
 
-      if (!res.ok) {
-        throw new Error(formatApiError(data, res.status, ENDPOINTS.tryOn));
-      }
-
-      if (!data?.image) {
-        throw new Error("API response missing 'image'.");
-      }
+      if (!res.ok) throw new Error(formatApiError(data, res.status, ENDPOINTS.tryOn));
+      if (!data?.image) throw new Error("API response missing 'image'.");
 
       state.tryOnDataUrl = data.image;
 
@@ -458,26 +569,15 @@ if (downloadTryOnBtn) {
 if (shareTryOnBtn) {
   shareTryOnBtn.addEventListener("click", async () => {
     const src = state.tryOnDataUrl;
-    if (!src) {
-      setStatus("status4", "Generate the try-on first.");
-      return;
-    }
+    if (!src) return setStatus("status4", "Generate the try-on first.");
 
     try {
-      if (!navigator.share) {
-        setStatus("status4", "Sharing not supported on this device/browser.");
-        return;
-      }
+      if (!navigator.share) return setStatus("status4", "Sharing not supported on this device/browser.");
 
       const blob = dataUrlToBlob(src);
       const file = new File([blob], "rebirth-tryon.png", { type: blob.type });
 
-      await navigator.share({
-        title: "Rebirth Try-On",
-        text: "My Rebirth try-on",
-        files: [file],
-      });
-
+      await navigator.share({ title: "Rebirth Try-On", text: "My Rebirth try-on", files: [file] });
       setStatus("status4", "Shared.");
     } catch {
       setStatus("status4", "Share cancelled.");
@@ -499,7 +599,7 @@ function dataUrlToBlob(dataUrl) {
 
 function downloadAny(src, filename) {
   const a = document.createElement("a");
-  a.href = src.startsWith("data:") ? src : encodeURI(src);
+  a.href = src;
   a.download = filename;
   document.body.appendChild(a);
   a.click();

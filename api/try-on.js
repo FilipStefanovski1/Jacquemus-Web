@@ -1,3 +1,7 @@
+export const config = {
+  api: { bodyParser: false },
+};
+
 import Busboy from "busboy";
 
 function readMultipart(req) {
@@ -10,9 +14,12 @@ function readMultipart(req) {
       const chunks = [];
       file.on("data", (d) => chunks.push(d));
       file.on("end", () => {
+        const mime =
+          info?.mimeType || info?.mime_type || info?.mimetype || "application/octet-stream";
+
         files[name] = {
           filename: info?.filename || "upload",
-          mimeType: info?.mimeType || "application/octet-stream",
+          mimeType: mime,
           buffer: Buffer.concat(chunks),
         };
       });
@@ -64,7 +71,8 @@ export default async function handler(req, res) {
     const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
 
     if (!apiKey) return res.status(500).json({ error: "Missing GEMINI_API_KEY in env" });
-    if (!files.person || !files.bag) return res.status(400).json({ error: "Missing person or bag image" });
+    if (!files.person || !files.bag)
+      return res.status(400).json({ error: "Missing person or bag image" });
 
     const prompt =
       fields.prompt ||
@@ -80,7 +88,7 @@ export default async function handler(req, res) {
         },
       ],
       generationConfig: {
-        responseModalities: ["IMAGE"],
+        responseModalities: ["TEXT", "IMAGE"],
       },
     };
 
@@ -107,7 +115,8 @@ export default async function handler(req, res) {
 
     if (!imgPart) {
       const text =
-        json?.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n") || null;
+        json?.candidates?.[0]?.content?.parts?.map((p) => p.text).filter(Boolean).join("\n") ||
+        null;
 
       return res.status(500).json({
         ok: false,
@@ -123,7 +132,12 @@ export default async function handler(req, res) {
     const base64 = inline?.data;
 
     if (!base64) {
-      return res.status(500).json({ ok: false, model, error: "Image part missing base64 data.", raw: json });
+      return res.status(500).json({
+        ok: false,
+        model,
+        error: "Image part missing base64 data.",
+        raw: json,
+      });
     }
 
     return res.status(200).json({

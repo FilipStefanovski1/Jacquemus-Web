@@ -158,18 +158,6 @@ a:hover { opacity: .92; }
   background: rgba(255,255,255,0.35);
 }
 
-.launch{
-  background: var(--btn);
-  color: #fff;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.25);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-.launch__icon{ font-size: 14px; opacity: 0.9; }
-
 /* ==========================
    HERO
    ========================== */
@@ -516,7 +504,7 @@ a:hover { opacity: .92; }
 
 @media (max-width: 700px){
   .nav{ gap: 8px; }
-  .nav a:not(.launch){ display:none; }
+  .nav{ position: relative; }
   .hero__sub br{ display:none; }
 
   .heroCollage{
@@ -548,7 +536,79 @@ a:hover { opacity: .92; }
 
 @media (max-width: 420px){
   .brand__name{ font-size: 13px; }
-  .launch{ padding: 9px 12px; }
   .btn{ width: 100%; }
   .hero__btn, .how__btn, .ctaBtn{ width: 100%; }
+}
+
+/* =========================
+   Mobile nav
+   ========================= */
+.navToggle{
+  display:none;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.navLinks{
+  display:flex;
+  align-items:center;
+  gap: 18px;
+}
+
+/* mobile */
+@media (max-width: 720px){
+  .navToggle{ display:inline-flex; align-items:center; justify-content:center; }
+
+  .navLinks{
+    position: absolute;
+    right: 16px;
+    top: 60px;
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 14px;
+    padding: 12px;
+    min-width: 170px;
+    box-shadow: 0 16px 45px rgba(0,0,0,0.12);
+    z-index: 9999;
+  }
+
+  .navLinks.is-open{
+    display: flex;
+  }
+
+  .navLinks a{
+    width: 100%;
+  }
+}
+/* =========================
+   ABOUT – ensure bags are in FRONT of people
+   ========================= */
+
+/* Person / profile cards */
+.aboutCard,
+.profileCard,
+.aboutPerson,
+.aboutImage {
+  position: relative;
+  z-index: 1;
+}
+
+/* Floating bag elements */
+.aboutBag,
+.floatingBag,
+.aboutDecor,
+.aboutCard__bag {
+  position: absolute;
+  z-index: 3;
+  pointer-events: none; /* optional: prevents accidental clicks */
 }

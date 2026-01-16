@@ -1,9 +1,59 @@
 // main.js
 // GSAP animations for Rebirth Creative Studio AI (landing + about)
-// Works with your current class names.
+// + Mobile nav toggle (About/Contact visible on mobile)
 
 (function () {
-  // smooth scroll for anchors (safe)
+  /* =========================
+     MOBILE NAV TOGGLE
+     ========================= */
+  const navToggle = document.getElementById("navToggle");
+  const navLinks = document.getElementById("navLinks");
+
+  function closeNav() {
+    if (!navLinks || !navToggle) return;
+    navLinks.classList.remove("is-open");
+    navToggle.setAttribute("aria-expanded", "false");
+    navToggle.setAttribute("aria-label", "Open menu");
+  }
+
+  function openNav() {
+    if (!navLinks || !navToggle) return;
+    navLinks.classList.add("is-open");
+    navToggle.setAttribute("aria-expanded", "true");
+    navToggle.setAttribute("aria-label", "Close menu");
+  }
+
+  if (navToggle && navLinks) {
+    navToggle.addEventListener("click", () => {
+      const isOpen = navLinks.classList.contains("is-open");
+      if (isOpen) closeNav();
+      else openNav();
+    });
+
+    // close when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!navLinks.classList.contains("is-open")) return;
+
+      const clickedInsideNav =
+        navLinks.contains(e.target) || navToggle.contains(e.target);
+
+      if (!clickedInsideNav) closeNav();
+    });
+
+    // close when clicking a link
+    navLinks.querySelectorAll("a").forEach((a) => {
+      a.addEventListener("click", () => closeNav());
+    });
+
+    // close on Escape
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeNav();
+    });
+  }
+
+  /* =========================
+     SMOOTH SCROLL FOR ANCHORS
+     ========================= */
   document.querySelectorAll('a[href^="#"]').forEach((a) => {
     a.addEventListener("click", (e) => {
       const id = a.getAttribute("href");
@@ -11,6 +61,7 @@
       if (!el) return;
       e.preventDefault();
       el.scrollIntoView({ behavior: "smooth", block: "start" });
+      closeNav();
     });
   });
 
@@ -19,7 +70,9 @@
 
   gsap.registerPlugin(ScrollTrigger);
 
-  // ---------- HERO INTRO (index) ----------
+  /* =========================
+     HERO INTRO (index)
+     ========================= */
   const heroTitle = document.querySelector(".hero__title");
   const heroSub = document.querySelector(".hero__sub");
   const heroBtn = document.querySelector(".hero__btn");
@@ -31,55 +84,21 @@
   if (heroTitle && collage) {
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
-    tl.fromTo(
-      heroTitle,
-      { y: 18, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.7 }
-    )
-      .fromTo(
-        heroSub,
-        { y: 14, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.6 },
-        "-=0.35"
-      )
-      .fromTo(
-        heroBtn,
-        { y: 10, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.55 },
-        "-=0.3"
-      )
-      .fromTo(
-        collage,
-        { y: 22, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.7 },
-        "-=0.25"
-      );
+    tl.fromTo(heroTitle, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 })
+      .fromTo(heroSub, { y: 14, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, "-=0.35")
+      .fromTo(heroBtn, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55 }, "-=0.3")
+      .fromTo(collage, { y: 22, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7 }, "-=0.25");
 
-    // Stagger the cards in a “studio reveal” way
     if (leftCard && mainCard && rightCard) {
-      tl.fromTo(
-        leftCard,
-        { rotate: -16, y: 26, opacity: 0 },
-        { rotate: -10, y: 0, opacity: 1, duration: 0.6 },
-        "-=0.35"
-      )
-        .fromTo(
-          mainCard,
-          { rotate: -7, y: 28, opacity: 0, scale: 0.985 },
-          { rotate: -2, y: 0, opacity: 1, scale: 1, duration: 0.7 },
-          "-=0.45"
-        )
-        .fromTo(
-          rightCard,
-          { rotate: 16, y: 26, opacity: 0 },
-          { rotate: 10, y: 0, opacity: 1, duration: 0.6 },
-          "-=0.5"
-        );
+      tl.fromTo(leftCard, { rotate: -16, y: 26, opacity: 0 }, { rotate: -10, y: 0, opacity: 1, duration: 0.6 }, "-=0.35")
+        .fromTo(mainCard, { rotate: -7, y: 28, opacity: 0, scale: 0.985 }, { rotate: -2, y: 0, opacity: 1, scale: 1, duration: 0.7 }, "-=0.45")
+        .fromTo(rightCard, { rotate: 16, y: 26, opacity: 0 }, { rotate: 10, y: 0, opacity: 1, duration: 0.6 }, "-=0.5");
     }
   }
 
-  // ---------- SCROLL REVEALS ----------
-  // Any section title + content will fade up gently.
+  /* =========================
+     SCROLL REVEALS
+     ========================= */
   const revealTargets = [
     ".how .sectionTitle",
     ".how .howSteps",
@@ -88,7 +107,7 @@
     ".gallery .sectionSub",
     ".gallery .galleryGrid",
     ".cta .ctaBox",
-    ".footer"
+    ".footer",
   ];
 
   revealTargets.forEach((sel) => {
@@ -110,7 +129,9 @@
     });
   });
 
-  // ---------- PARALLAX FLOAT ON COLLAGE (mouse move) ----------
+  /* =========================
+     PARALLAX FLOAT (mouse move)
+     ========================= */
   if (collage && leftCard && mainCard && rightCard) {
     const strength = 14;
 
@@ -129,7 +150,9 @@
     });
   }
 
-  // ---------- GALLERY TILE HOVER TILT ----------
+  /* =========================
+     GALLERY TILE HOVER TILT
+     ========================= */
   document.querySelectorAll(".galleryGrid .tile").forEach((tile) => {
     tile.style.transformStyle = "preserve-3d";
 
@@ -158,7 +181,9 @@
     });
   });
 
-  // ---------- BUTTON MICRO-INTERACTION ----------
+  /* =========================
+     BUTTON MICRO-INTERACTION
+     ========================= */
   document.querySelectorAll(".btn, .launch").forEach((btn) => {
     btn.addEventListener("mouseenter", () => {
       gsap.to(btn, { y: -1, duration: 0.18, ease: "power2.out" });
